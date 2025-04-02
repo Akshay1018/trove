@@ -137,13 +137,5 @@ When contributing new templates or modifying existing ones:
 If you need help, you can:
 - Open a GitHub issue
 - Email us at ak715173@gmail.com
-- Join our community discussions
-
-## Recognition
-
-Contributors will be:
-- Listed in our README.md
-- Mentioned in release notes
-- Given credit in documentation
 
 Thank you for contributing to Trove CLI! 🚀 
