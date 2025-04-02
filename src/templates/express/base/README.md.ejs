@@ -1,0 +1,99 @@
+# <%= projectName %>
+
+A TypeScript-based Express.js backend application with modern best practices.
+
+## Features
+
+- TypeScript support
+- Environment configuration
+- Logging with Winston
+- Error handling middleware
+- Request validation
+- API documentation
+<% if (database) { %>- <%= database.charAt(0).toUpperCase() + database.slice(1) %> database integration<% } %>
+<% if (auth) { %>- Authentication using <%= auth.toUpperCase() %><% } %>
+
+## Prerequisites
+
+- Node.js >= 14
+- npm >= 6
+<% if (database === 'mongodb') { %>- MongoDB >= 4.4<% } %>
+<% if (database === 'postgresql') { %>- PostgreSQL >= 12<% } %>
+<% if (database === 'mysql') { %>- MySQL >= 8<% } %>
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Copy the environment file:
+   ```bash
+   cp .env.example .env
+   ```
+4. Update the environment variables in `.env`
+
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Scripts
+
+- `npm run dev` - Start the development server with hot reload
+- `npm run build` - Build the application
+- `npm start` - Start the production server
+- `npm test` - Run tests
+- `npm run lint` - Run linting
+- `npm run format` - Format code
+
+## Project Structure
+
+```
+src/
+├── config/         # Configuration files
+├── controllers/    # Route controllers
+├── middleware/     # Custom middleware
+├── models/         # Database models
+├── routes/         # API routes
+├── services/       # Business logic
+├── types/          # TypeScript types
+├── utils/          # Utility functions
+└── index.ts        # Application entry point
+```
+
+## API Documentation
+
+### Health Check
+- GET `/api/health` - Check server status
+
+<% if (auth) { %>### Authentication
+- POST `/api/auth/register` - Register a new user
+- POST `/api/auth/login` - Login user
+<% if (auth === 'oauth') { %>- GET `/api/auth/google` - Google OAuth login
+- GET `/api/auth/google/callback` - Google OAuth callback<% } %>
+<% } %>
+
+## Error Handling
+
+The application includes a centralized error handling system. All errors are logged and returned in a consistent format:
+
+```json
+{
+  "success": false,
+  "error": "Error message",
+  "stack": "Error stack trace (development only)"
+}
+```
+
+## Contributing
+
+1. Create a feature branch
+2. Commit your changes
+3. Push to the branch
+4. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License. 
