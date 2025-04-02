@@ -21,17 +21,67 @@ export class TemplateManager {
     // Copy base template
     await this.copyTemplateFiles(templatePath, targetPath, config);
 
-    // Add database configuration
-    if (config.database) {
+    // Add database configuration if not skipped
+    if (config.database && config.database !== 'skip') {
       const dbTemplatePath = path.join(this.templatesDir, framework!, 'database', config.database);
       await this.copyTemplateFiles(dbTemplatePath, targetPath, config);
     }
 
-    // Add authentication configuration
-    if (config.auth) {
+    // Add authentication configuration if not skipped
+    if (config.auth && config.auth !== 'skip') {
       const authTemplatePath = path.join(this.templatesDir, framework!, 'auth', config.auth);
       await this.copyTemplateFiles(authTemplatePath, targetPath, config);
     }
+
+    // Create minimal configuration files for skipped options
+    if (config.database === 'skip') {
+      await this.createPlaceholderConfig(targetPath, 'database');
+    }
+
+    if (config.auth === 'skip') {
+      await this.createPlaceholderConfig(targetPath, 'auth');
+    }
+  }
+
+  private async createPlaceholderConfig(targetPath: string, type: 'database' | 'auth'): Promise<void> {
+    const configDir = path.join(targetPath, 'src', 'config');
+    await fs.promises.mkdir(configDir, { recursive: true });
+
+    const placeholderContent = type === 'database' 
+      ? this.getDatabasePlaceholder()
+      : this.getAuthPlaceholder();
+
+    await fs.promises.writeFile(
+      path.join(configDir, `${type}.config.ts`),
+      placeholderContent
+    );
+  }
+
+  private getDatabasePlaceholder(): string {
+    return `// Database configuration placeholder
+// To add database support later:
+// 1. Install required dependencies
+// 2. Configure your database connection here
+// 3. Update environment variables
+
+export const databaseConfig = {
+  // Add your database configuration here
+};
+`;
+  }
+
+  private getAuthPlaceholder(): string {
+    return `// Authentication configuration placeholder
+// To add authentication support later:
+// 1. Install required dependencies
+// 2. Configure your authentication here
+// 3. Set up authentication middleware
+// 4. Create authentication routes
+
+export const authConfig = {
+  // Add your authentication configuration here
+};
+`;
   }
 
   private async copyTemplateFiles(sourcePath: string, targetPath: string, config: ProjectConfig): Promise<void> {
@@ -74,8 +124,8 @@ export class TemplateManager {
     try {
       return ejs.render(content, {
         projectName: config.name,
-        database: config.database,
-        auth: config.auth,
+        database: config.database === 'skip' ? null : config.database,
+        auth: config.auth === 'skip' ? null : config.auth,
         ...config,
       });
     } catch (error) {

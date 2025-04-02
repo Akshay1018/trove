@@ -23,6 +23,22 @@ export async function createProject(name: string, options: ProjectOptions) {
     console.log(chalk.cyan(`  cd ${answers.name}`));
     console.log(chalk.cyan('  npm install'));
     console.log(chalk.cyan('  npm run dev'));
+
+    if (answers.database === 'skip') {
+      console.log('\n' + chalk.yellow('Database configuration was skipped.'));
+      console.log(chalk.yellow('To add database later, you will need to:'));
+      console.log(chalk.yellow('1. Install database dependencies'));
+      console.log(chalk.yellow('2. Configure database connection'));
+      console.log(chalk.yellow('3. Set up environment variables'));
+    }
+
+    if (answers.auth === 'skip') {
+      console.log('\n' + chalk.yellow('Authentication was skipped.'));
+      console.log(chalk.yellow('To add authentication later, you will need to:'));
+      console.log(chalk.yellow('1. Install authentication dependencies'));
+      console.log(chalk.yellow('2. Set up authentication middleware'));
+      console.log(chalk.yellow('3. Configure authentication routes'));
+    }
     
   } catch (error) {
     console.error(chalk.red('Error creating project:'), error);
@@ -48,10 +64,10 @@ async function promptMissingOptions(name?: string, options: ProjectOptions = {})
       name: 'framework',
       message: 'Which framework would you like to use?',
       choices: [
-        { name: 'Express.js', value: 'express' },
-        { name: 'NestJS', value: 'nest' },
-        { name: 'Fastify', value: 'fastify' },
-        { name: 'Koa', value: 'koa' }
+        { name: 'Express.js - Lightweight and flexible', value: 'express' },
+        { name: 'NestJS - Enterprise-ready, scalable', value: 'nest' },
+        { name: 'Fastify - High-performance focus', value: 'fastify' },
+        { name: 'Koa - Modern and minimal', value: 'koa' }
       ]
     });
   }
@@ -60,11 +76,12 @@ async function promptMissingOptions(name?: string, options: ProjectOptions = {})
     questions.push({
       type: 'list',
       name: 'database',
-      message: 'Which database would you like to use?',
+      message: 'Which database would you like to use? (can be configured later)',
       choices: [
-        { name: 'MongoDB', value: 'mongodb' },
-        { name: 'PostgreSQL', value: 'postgresql' },
-        { name: 'MySQL', value: 'mysql' }
+        { name: 'MongoDB - NoSQL, document-based', value: 'mongodb' },
+        { name: 'PostgreSQL - Robust relational database', value: 'postgresql' },
+        { name: 'MySQL - Popular relational database', value: 'mysql' },
+        { name: 'Skip for now - Configure database later', value: 'skip' }
       ]
     });
   }
@@ -73,11 +90,12 @@ async function promptMissingOptions(name?: string, options: ProjectOptions = {})
     questions.push({
       type: 'list',
       name: 'auth',
-      message: 'Which authentication method would you like to use?',
+      message: 'Which authentication method would you like to use? (can be configured later)',
       choices: [
-        { name: 'JWT', value: 'jwt' },
-        { name: 'Session', value: 'session' },
-        { name: 'OAuth', value: 'oauth' }
+        { name: 'JWT - Stateless authentication', value: 'jwt' },
+        { name: 'Session - Traditional session-based', value: 'session' },
+        { name: 'OAuth - Third-party authentication', value: 'oauth' },
+        { name: 'Skip for now - Configure authentication later', value: 'skip' }
       ]
     });
   }
