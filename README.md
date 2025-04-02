@@ -187,7 +187,7 @@ docker run -p 3000:3000 my-awesome-api
 
 Example GitHub Actions workflow:
 
-\`\`\`yaml
+```yaml
 name: CI/CD Pipeline
 
 on:
@@ -211,7 +211,7 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
-\`\`\`
+```
 
 ## 📚 API Documentation
 
