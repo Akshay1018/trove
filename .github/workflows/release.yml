@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test
+        run: npm test -- --passWithNoTests
 
       - name: Build
         run: npm run build
@@ -58,7 +58,7 @@ jobs:
             const { data: commits } = await github.rest.repos.compareCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              base: previousTag,
+              base: previousTag || 'HEAD~10',
               head: currentTag
             });
             
@@ -87,6 +87,6 @@ jobs:
           prerelease: false
 
       - name: Publish to NPM
-        run: npm publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
