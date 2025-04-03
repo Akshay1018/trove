@@ -6,11 +6,10 @@ export interface PackageVersion {
 
 export interface PackageInfo {
   name: string;
-  versions: PackageVersion[];
-  category: 'core' | 'database' | 'auth' | 'testing' | 'development';
+  version: string;
   description: string;
-  isDevDependency?: boolean;
-  peerDependencies?: Record<string, string>;
+  author: string;
+  license: string;
 }
 
 export interface FrameworkDependencies {
@@ -31,17 +30,16 @@ export interface FrameworkDependencies {
 
 export interface DependencyRegistry {
   express: FrameworkDependencies;
-  nest: FrameworkDependencies;
+  nestjs: FrameworkDependencies;
   fastify: FrameworkDependencies;
   koa: FrameworkDependencies;
 }
 
 export interface DependencyResolutionOptions {
-  framework: 'express' | 'nest' | 'fastify' | 'koa';
+  framework: 'express' | 'nestjs' | 'fastify' | 'koa';
   database?: 'mongodb' | 'postgresql' | 'mysql' | 'skip';
   auth?: 'jwt' | 'session' | 'oauth' | 'skip';
   includeDev?: boolean;
-  includeOptional?: boolean;
 }
 
 export interface ResolvedDependencies {

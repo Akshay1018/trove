@@ -53,57 +53,38 @@ export class DependencyResolver {
       throw new Error(`Framework ${framework} not found in dependency registry`);
     }
 
-    const dependencies: PackageInfo[] = [];
-    const devDependencies: PackageInfo[] = [];
-    const peerDependencies: PackageInfo[] = [];
-
-    // Add core dependencies
-    dependencies.push(...frameworkDeps.core);
-
-    // Add database dependencies if specified
-    if (database) {
-      const dbDeps = frameworkDeps.database[database];
-      if (dbDeps) {
-        dependencies.push(...dbDeps);
-      }
-    }
-
-    // Add auth dependencies if specified
-    if (auth) {
-      const authDeps = frameworkDeps.auth[auth];
-      if (authDeps) {
-        dependencies.push(...authDeps);
-      }
-    }
-
-    // Add development dependencies if requested
-    if (includeDev) {
-      devDependencies.push(...frameworkDeps.development);
-      devDependencies.push(...frameworkDeps.testing);
-    }
-
-    // Separate dev dependencies and peer dependencies
+    // Initialize result object
     const result: ResolvedDependencies = {
       dependencies: {},
       devDependencies: {},
       peerDependencies: {}
     };
 
-    // Process regular dependencies
-    dependencies.forEach(dep => {
-      if (dep.isPeerDependency) {
-        result.peerDependencies[dep.name] = dep.versions[0].version;
-      } else {
-        result.dependencies[dep.name] = dep.versions[0].version;
-      }
+    // Add core dependencies
+    frameworkDeps.core.forEach(dep => {
+      result.dependencies[dep.name] = dep.version;
     });
 
-    // Process dev dependencies
-    devDependencies.forEach(dep => {
-      if (dep.isDevDependency) {
-        result.devDependencies[dep.name] = dep.versions[0].version;
-      }
-    });
+    // Add database dependencies if specified
+    if (database && database !== 'skip' && frameworkDeps.database[database]) {
+      frameworkDeps.database[database].forEach(dep => {
+        result.dependencies[dep.name] = dep.version;
+      });
+    }
+
+    // Add auth dependencies if specified
+    if (auth && auth !== 'skip' && frameworkDeps.auth[auth]) {
+      frameworkDeps.auth[auth].forEach(dep => {
+        result.dependencies[dep.name] = dep.version;
+      });
+    }
+
+    // Add development dependencies if requested
+    if (includeDev) {
+      [...frameworkDeps.development, ...frameworkDeps.testing].forEach(dep => {
+        result.devDependencies[dep.name] = dep.version;
+      });
+    }
 
     return result;
   }
