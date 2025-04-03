@@ -19,6 +19,9 @@ jobs:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
       
+      - name: Install Dependencies with npm install
+        run: npm install
+      
       - name: Install Dependencies with npm install (Check for consistency)
         run: npm install --package-lock-only
 
