@@ -1,7 +1,45 @@
 import { DependencyResolutionOptions, PackageInfo, ResolvedDependencies } from './types';
 import { dependencyRegistry } from './registry';
+import { logger } from '../utils/logger';
 
 export class DependencyResolver {
+  private dependencies: Map<string, PackageInfo>;
+  private devDependencies: Map<string, PackageInfo>;
+
+  constructor() {
+    this.dependencies = new Map();
+    this.devDependencies = new Map();
+  }
+
+  addDependency(pkg: PackageInfo, isDev = false): void {
+    const target = isDev ? this.devDependencies : this.dependencies;
+    if (!target.has(pkg.name)) {
+      target.set(pkg.name, pkg);
+    } else {
+      logger.warn(`Package ${pkg.name} is already added as a ${isDev ? 'dev ' : ''}dependency`);
+    }
+  }
+
+  addDependencies(packages: PackageInfo[], isDev = false): void {
+    packages.forEach(pkg => this.addDependency(pkg, isDev));
+  }
+
+  getDependencies(): Record<string, string> {
+    return this.mapToRecord(this.dependencies);
+  }
+
+  getDevDependencies(): Record<string, string> {
+    return this.mapToRecord(this.devDependencies);
+  }
+
+  private mapToRecord(map: Map<string, PackageInfo>): Record<string, string> {
+    const record: Record<string, string> = {};
+    map.forEach((pkg, name) => {
+      record[name] = pkg.version;
+    });
+    return record;
+  }
+
   /**
    * Resolves dependencies based on the provided options
    * @param options The dependency resolution options

@@ -1,19 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "es2018",
     "module": "commonjs",
-    "lib": ["ES2020"],
+    "lib": ["es2018", "es2019", "es2020"],
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "allowJs": true,
-    "checkJs": false,
-    "noImplicitAny": false,
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
@@ -22,7 +18,16 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "sourceMap": true,
     "removeComments": false,
-    "noEmitOnError": false
+    "noEmitOnError": false,
+    "allowJs": true,
+    "checkJs": false,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false
   },
   "include": [
     "src/**/*"
@@ -30,9 +35,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/templates/**/*.ts",
-    "src/templates/**/*.js",
-    "**/*.test.ts",
     "templates"
   ]
 } 
