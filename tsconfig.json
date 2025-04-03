@@ -45,6 +45,7 @@
     "node_modules",
     "dist",
     "templates",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "**/templates/**"
   ]
 } 

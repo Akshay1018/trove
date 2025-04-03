@@ -8,7 +8,8 @@ export class TemplateManager {
   private readonly templatesPath: string;
 
   constructor() {
-    this.templatesPath = join(__dirname, '..', 'templates');
+    // Look for templates in the root templates directory
+    this.templatesPath = join(process.cwd(), 'templates');
   }
 
   async createProject(projectName: string, options: TemplateOptions): Promise<void> {
