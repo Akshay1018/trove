@@ -1,136 +1,101 @@
-import fs from 'fs';
-import path from 'path';
+import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { TemplateOptions, TemplateFile, FrameworkTemplate } from '../types/template';
+import { logger } from './logger';
 import ejs from 'ejs';
-import { ProjectConfig } from '../types/project';
 
 export class TemplateManager {
-  private templatesDir: string;
+  private readonly templatesPath: string;
 
   constructor() {
-    this.templatesDir = path.join(__dirname, '..', 'templates');
+    this.templatesPath = join(__dirname, '..', 'templates');
   }
 
-  async copyTemplate(config: ProjectConfig): Promise<void> {
-    const { framework, name: projectName } = config;
-    const templatePath = path.join(this.templatesDir, framework!, 'base');
-    const targetPath = path.join(process.cwd(), projectName);
-
-    // Create project directory
-    await fs.promises.mkdir(targetPath, { recursive: true });
-
-    // Copy base template
-    await this.copyTemplateFiles(templatePath, targetPath, config);
-
-    // Add database configuration if not skipped
-    if (config.database && config.database !== 'skip') {
-      const dbTemplatePath = path.join(this.templatesDir, framework!, 'database', config.database);
-      await this.copyTemplateFiles(dbTemplatePath, targetPath, config);
-    }
-
-    // Add authentication configuration if not skipped
-    if (config.auth && config.auth !== 'skip') {
-      const authTemplatePath = path.join(this.templatesDir, framework!, 'auth', config.auth);
-      await this.copyTemplateFiles(authTemplatePath, targetPath, config);
-    }
-
-    // Create minimal configuration files for skipped options
-    if (config.database === 'skip') {
-      await this.createPlaceholderConfig(targetPath, 'database');
-    }
-
-    if (config.auth === 'skip') {
-      await this.createPlaceholderConfig(targetPath, 'auth');
-    }
-  }
-
-  private async createPlaceholderConfig(targetPath: string, type: 'database' | 'auth'): Promise<void> {
-    const configDir = path.join(targetPath, 'src', 'config');
-    await fs.promises.mkdir(configDir, { recursive: true });
-
-    const placeholderContent = type === 'database' 
-      ? this.getDatabasePlaceholder()
-      : this.getAuthPlaceholder();
-
-    await fs.promises.writeFile(
-      path.join(configDir, `${type}.config.ts`),
-      placeholderContent
-    );
-  }
-
-  private getDatabasePlaceholder(): string {
-    return `// Database configuration placeholder
-// To add database support later:
-// 1. Install required dependencies
-// 2. Configure your database connection here
-// 3. Update environment variables
-
-export const databaseConfig = {
-  // Add your database configuration here
-};
-`;
-  }
-
-  private getAuthPlaceholder(): string {
-    return `// Authentication configuration placeholder
-// To add authentication support later:
-// 1. Install required dependencies
-// 2. Configure your authentication here
-// 3. Set up authentication middleware
-// 4. Create authentication routes
-
-export const authConfig = {
-  // Add your authentication configuration here
-};
-`;
-  }
-
-  private async copyTemplateFiles(sourcePath: string, targetPath: string, config: ProjectConfig): Promise<void> {
-    const files = await this.getAllFiles(sourcePath);
-
-    for (const file of files) {
-      const relativePath = path.relative(sourcePath, file);
-      const targetFilePath = path.join(targetPath, relativePath);
-      const targetDir = path.dirname(targetFilePath);
-
-      // Create directory if it doesn't exist
-      await fs.promises.mkdir(targetDir, { recursive: true });
-
-      // Read and process template
-      const content = await fs.promises.readFile(file, 'utf-8');
-      const processedContent = await this.processTemplate(content, config);
-
-      // Write processed content
-      await fs.promises.writeFile(targetFilePath, processedContent);
-    }
-  }
-
-  private async getAllFiles(dirPath: string): Promise<string[]> {
+  async createProject(projectName: string, options: TemplateOptions): Promise<void> {
     try {
-      const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
-      const files = await Promise.all(
-        entries.map((entry) => {
-          const res = path.resolve(dirPath, entry.name);
-          return entry.isDirectory() ? this.getAllFiles(res) : [res];
-        })
-      );
-      return files.flat();
+      // Create project directory
+      const projectPath = join(process.cwd(), projectName);
+      if (existsSync(projectPath)) {
+        throw new Error(`Directory ${projectName} already exists`);
+      }
+      mkdirSync(projectPath, { recursive: true });
+
+      // Load and process templates
+      await this.processFrameworkTemplate(projectPath, options);
+      if (options.database && options.database !== 'skip') {
+        await this.processDatabaseTemplate(projectPath, options);
+      }
+      if (options.auth && options.auth !== 'skip') {
+        await this.processAuthTemplate(projectPath, options);
+      }
+
+      logger.success(`Project ${projectName} created successfully!`);
+      logger.info('\nNext steps:');
+      logger.info(`  cd ${projectName}`);
+      logger.info('  npm install');
+      logger.info('  npm run dev');
+
     } catch (error) {
-      // If directory doesn't exist, return empty array
-      return [];
+      logger.error('Failed to create project:', error instanceof Error ? error.message : String(error));
+      throw error;
     }
   }
 
-  private async processTemplate(content: string, config: ProjectConfig): Promise<string> {
-    try {
-      return ejs.render(content, {
-        projectName: config.name,
-        database: config.database === 'skip' ? null : config.database,
-        auth: config.auth === 'skip' ? null : config.auth,
-        ...config,
-      });
-    } catch (error) {
-      // If file is not a template, return as is
-      return content;
+  private async processFrameworkTemplate(projectPath: string, options: TemplateOptions): Promise<void> {
+    const frameworkPath = join(this.templatesPath, options.framework);
+    const templateConfig = this.loadTemplateConfig(frameworkPath);
+    await this.processTemplate(projectPath, templateConfig, options);
+  }
+
+  private async processDatabaseTemplate(projectPath: string, options: TemplateOptions): Promise<void> {
+    if (!options.database || options.database === 'skip') return;
+    const databasePath = join(this.templatesPath, 'database', options.database);
+    const templateConfig = this.loadTemplateConfig(databasePath);
+    await this.processTemplate(projectPath, templateConfig, options);
+  }
+
+  private async processAuthTemplate(projectPath: string, options: TemplateOptions): Promise<void> {
+    if (!options.auth || options.auth === 'skip') return;
+    const authPath = join(this.templatesPath, 'auth', options.auth);
+    const templateConfig = this.loadTemplateConfig(authPath);
+    await this.processTemplate(projectPath, templateConfig, options);
+  }
+
+  private loadTemplateConfig(templatePath: string): FrameworkTemplate {
+    const configPath = join(templatePath, 'template.json');
+    if (!existsSync(configPath)) {
+      throw new Error(`Template configuration not found at ${configPath}`);
+    }
+    const configContent = readFileSync(configPath, 'utf-8');
+    return JSON.parse(configContent) as FrameworkTemplate;
+  }
+
+  private async processTemplate(
+    projectPath: string, 
+    template: FrameworkTemplate, 
+    options: TemplateOptions
+  ): Promise<void> {
+    // Process each template file
+    for (const file of template.files) {
+      const targetPath = join(projectPath, file.path);
+      const targetDir = targetPath.split('/').slice(0, -1).join('/');
+      
+      if (!existsSync(targetDir)) {
+        mkdirSync(targetDir, { recursive: true });
+      }
+
+      let content = file.content;
+      if (file.isConfig) {
+        content = await ejs.render(content, {
+          projectName: projectPath.split('/').pop(),
+          ...options,
+          dependencies: template.dependencies,
+          devDependencies: template.devDependencies,
+          env: template.environmentVariables
+        });
+      }
+
+      writeFileSync(targetPath, content);
     }
   }
 } 

@@ -5,13 +5,20 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { createProject } from './commands/create';
 import { version } from '../package.json';
+import { createCommand } from './commands/create';
 
 const program = new Command();
 
 program
   .name('trove')
-  .description('A modern CLI tool for creating Node.js applications with best practices')
+  .description('A CLI tool for creating modern Node.js backend applications')
   .version(version);
+
+// Add commands
+createCommand(program, {
+  defaultFramework: 'express',
+  defaultDatabase: 'mongodb'
+});
 
 program
   .command('create')
@@ -127,4 +134,4 @@ program
     }
   });
 
-program.parse(); 
+program.parse(process.argv); 
