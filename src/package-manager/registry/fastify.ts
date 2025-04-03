@@ -1,4 +1,4 @@
-import { PackageInfo } from '../../types/project';
+import { PackageInfo, FrameworkDependencies } from '../types';
 
 export const fastifyPackages: PackageInfo[] = [
   {
@@ -22,4 +22,12 @@ export const fastifyPackages: PackageInfo[] = [
     author: 'Fastify team',
     license: 'MIT'
   }
-]; 
+];
+
+export const fastifyDependencies: FrameworkDependencies = {
+  core: fastifyPackages,
+  database: {},
+  auth: {},
+  development: [],
+  testing: []
+}; 

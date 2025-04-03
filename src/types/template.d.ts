@@ -8,40 +8,40 @@ declare module '*.template' {
   export default content;
 }
 
-type DatabaseType = 'mongodb' | 'postgresql' | 'mysql' | 'skip';
-type AuthType = 'jwt' | 'session' | 'oauth' | 'skip';
-type CicdType = 'github' | 'gitlab' | 'azure' | 'skip';
-
-export interface TemplateOptions {
-  framework: 'express' | 'koa' | 'nestjs' | 'fastify';
-  database?: DatabaseType;
-  auth?: AuthType;
-  cicd?: CicdType;
+interface TemplateOptions {
+  database?: 'mongodb' | 'postgresql' | 'mysql' | null;
+  auth?: 'jwt' | 'session' | 'oauth' | null;
+  framework?: 'express' | 'koa' | 'nest' | 'fastify';
+  cicd?: 'github' | 'gitlab' | 'bitbucket' | null;
 }
 
-export interface TemplateFile {
+interface TemplateFile {
   path: string;
   content: string;
   isConfig?: boolean;
 }
 
-export interface FrameworkTemplate {
+interface FrameworkTemplate {
+  files: TemplateFile[];
+  dependencies: string[];
+  devDependencies: string[];
+  scripts: Record<string, string>;
+}
+
+interface DatabaseTemplate {
   files: TemplateFile[];
   dependencies: string[];
   devDependencies: string[];
   environmentVariables: Record<string, string>;
 }
 
-export interface DatabaseTemplate extends FrameworkTemplate {}
-export interface AuthTemplate extends FrameworkTemplate {}
+interface AuthTemplate {
+  files: TemplateFile[];
+  dependencies: string[];
+  devDependencies: string[];
+  environmentVariables: Record<string, string>;
+} 
 
-interface PackageInfo {
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  license: string;
-}
 
 declare module 'inquirer' {
   interface Answers {

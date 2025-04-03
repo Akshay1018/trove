@@ -1,38 +1,19 @@
-export interface PackageInfo {
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  license: string;
-}
+import { Framework, Database, Auth, PackageInfo } from '../types/base';
 
 export interface FrameworkDependencies {
   core: PackageInfo[];
-  database: {
-    mongodb?: PackageInfo[];
-    postgresql?: PackageInfo[];
-    mysql?: PackageInfo[];
-  };
-  auth: {
-    jwt?: PackageInfo[];
-    session?: PackageInfo[];
-    oauth?: PackageInfo[];
-  };
+  database: Partial<Record<Database, PackageInfo[]>>;
+  auth: Partial<Record<Auth, PackageInfo[]>>;
   development: PackageInfo[];
   testing: PackageInfo[];
 }
 
-export interface DependencyRegistry {
-  express: FrameworkDependencies;
-  nestjs: FrameworkDependencies;
-  fastify: FrameworkDependencies;
-  koa: FrameworkDependencies;
-}
+export type DependencyRegistry = Record<Framework, FrameworkDependencies>;
 
 export interface DependencyResolutionOptions {
-  framework: 'express' | 'nestjs' | 'fastify' | 'koa';
-  database?: 'mongodb' | 'postgresql' | 'mysql' | 'skip';
-  auth?: 'jwt' | 'session' | 'oauth' | 'skip';
+  framework: Framework;
+  database?: Database;
+  auth?: Auth;
   includeDev?: boolean;
 }
 
@@ -41,3 +22,5 @@ export interface ResolvedDependencies {
   devDependencies: Record<string, string>;
   peerDependencies: Record<string, string>;
 } 
+
+export { PackageInfo };

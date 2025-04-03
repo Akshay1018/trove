@@ -4,10 +4,18 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { TemplateManager } from '../utils/template-manager';
 import { logger } from '../utils/logger';
+import { Framework, Database, Auth } from '../types/base';
 
 interface CreateCommandOptions {
   defaultFramework?: string;
   defaultDatabase?: string;
+}
+
+interface Answers {
+  projectName: string;
+  framework: Framework;
+  database: Database;
+  auth: Auth;
 }
 
 export function createCommand(program: Command, options: CreateCommandOptions = {}): void {
@@ -37,22 +45,10 @@ export function createCommand(program: Command, options: CreateCommandOptions = 
             message: chalk.green('Which framework would you like to use?'),
             default: options.defaultFramework || 'express',
             choices: [
-              {
-                name: chalk.blue('Express.js') + chalk.gray(' - Fast, unopinionated, minimalist web framework'),
-                value: 'express'
-              },
-              {
-                name: chalk.blue('Koa.js') + chalk.gray(' - Modern & lightweight web framework'),
-                value: 'koa'
-              },
-              {
-                name: chalk.blue('NestJS') + chalk.gray(' - Progressive Node.js framework for scalable apps'),
-                value: 'nestjs'
-              },
-              {
-                name: chalk.blue('Fastify') + chalk.gray(' - Fast and low overhead web framework'),
-                value: 'fastify'
-              }
+              { name: chalk.blue('Express.js') + chalk.gray(' - Fast, unopinionated, minimalist web framework'), value: 'express' },
+              { name: chalk.blue('Koa.js') + chalk.gray(' - Modern & lightweight web framework'), value: 'koa' },
+              { name: chalk.blue('NestJS') + chalk.gray(' - Progressive Node.js framework for scalable apps'), value: 'nestjs' },
+              { name: chalk.blue('Fastify') + chalk.gray(' - Fast and low overhead web framework'), value: 'fastify' }
             ]
           },
           {
@@ -61,22 +57,10 @@ export function createCommand(program: Command, options: CreateCommandOptions = 
             message: chalk.green('Which database would you like to use?'),
             default: options.defaultDatabase || 'mongodb',
             choices: [
-              {
-                name: chalk.yellow('MongoDB') + chalk.gray(' - NoSQL database for modern apps'),
-                value: 'mongodb'
-              },
-              {
-                name: chalk.yellow('PostgreSQL') + chalk.gray(' - Advanced open source SQL database'),
-                value: 'postgresql'
-              },
-              {
-                name: chalk.yellow('MySQL') + chalk.gray(' - Popular open source SQL database'),
-                value: 'mysql'
-              },
-              {
-                name: chalk.gray('Skip database setup'),
-                value: 'skip'
-              }
+              { name: chalk.yellow('MongoDB') + chalk.gray(' - NoSQL database for modern apps'), value: 'mongodb' },
+              { name: chalk.yellow('PostgreSQL') + chalk.gray(' - Advanced open source SQL database'), value: 'postgresql' },
+              { name: chalk.yellow('MySQL') + chalk.gray(' - Popular open source SQL database'), value: 'mysql' },
+              { name: chalk.gray('Skip database setup'), value: 'skip' }
             ]
           },
           {
@@ -84,25 +68,13 @@ export function createCommand(program: Command, options: CreateCommandOptions = 
             name: 'auth',
             message: chalk.green('Which authentication method would you like to use?'),
             choices: [
-              {
-                name: chalk.magenta('JWT') + chalk.gray(' - JSON Web Token based authentication'),
-                value: 'jwt'
-              },
-              {
-                name: chalk.magenta('Session') + chalk.gray(' - Traditional session-based auth'),
-                value: 'session'
-              },
-              {
-                name: chalk.magenta('OAuth') + chalk.gray(' - Social authentication (Google, GitHub, etc.)'),
-                value: 'oauth'
-              },
-              {
-                name: chalk.gray('Skip authentication setup'),
-                value: 'skip'
-              }
+              { name: chalk.magenta('JWT') + chalk.gray(' - JSON Web Token based authentication'), value: 'jwt' },
+              { name: chalk.magenta('Session') + chalk.gray(' - Traditional session-based auth'), value: 'session' },
+              { name: chalk.magenta('OAuth') + chalk.gray(' - Social authentication (Google, GitHub, etc.)'), value: 'oauth' },
+              { name: chalk.gray('Skip authentication setup'), value: 'skip' }
             ]
           }
-        ]);
+        ]) as unknown as Answers;
 
         const spinner = ora({
           text: chalk.cyan('Creating your awesome project...'),
