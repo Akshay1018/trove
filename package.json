@@ -8,7 +8,7 @@
     "trove": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -r src/templates dist/",
     "watch": "tsc -w",
     "dev": "ts-node src/cli.ts",
     "test": "jest --passWithNoTests",
