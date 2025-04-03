@@ -55,12 +55,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/trove-cli.git"
+    "url": "git+https://github.com/Akshay1018/trove.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/trove-cli/issues"
+    "url": "https://github.com/Akshay1018/trove/issues"
   },
-  "homepage": "https://github.com/yourusername/trove-cli#readme",
+  "homepage": "https://github.com/Akshay1018/trove#readme",
   "engines": {
     "node": ">=14.0.0"
   },
