@@ -1,0 +1,93 @@
+# Source files
+src/
+
+# TypeScript config
+tsconfig.json
+tsconfig.*.json
+
+# Tests
+__tests__/
+coverage/
+*.test.ts
+jest.config.*
+
+# Development configs
+.eslintrc*
+.prettierrc*
+.editorconfig
+.husky/
+.github/
+.vscode/
+.idea/
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+bitbucket-pipelines.yml
+azure-pipelines.yml
+.circleci/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variable files
+.env
+.env.test
+.env.production
+.env.local
+.env.development
+
+# Development files
+docs/
+examples/
+scripts/
+.DS_Store
+*.swp
+*.swo
+
+# Documentation
+CONTRIBUTING.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# Development specific files
+nodemon.json
+.npmrc
+.yarnrc
+*.todo
+TODO.md
+NOTES.md 
