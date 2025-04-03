@@ -1,9 +1,3 @@
-export interface PackageVersion {
-  version: string;
-  description?: string;
-  isRequired?: boolean;
-}
-
 export interface PackageInfo {
   name: string;
   version: string;

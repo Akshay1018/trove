@@ -3,12 +3,12 @@
     "target": "es2018",
     "module": "commonjs",
     "lib": ["es2018", "es2019", "es2020"],
-    "declaration": true,
+    "declaration": false,
     "outDir": "./dist",
     "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": false,
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "baseUrl": ".",
@@ -27,7 +27,16 @@
     "strictNullChecks": false,
     "strictFunctionTypes": false,
     "strictBindCallApply": false,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "allowUnreachableCode": true,
+    "allowUnusedLabels": true,
+    "noEmitHelpers": true,
+    "importHelpers": false,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*"
@@ -35,6 +44,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    "templates"
+    "templates",
+    "**/*.test.ts"
   ]
 } 
