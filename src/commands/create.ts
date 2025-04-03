@@ -1,5 +1,7 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
+import chalk from 'chalk';
+import ora from 'ora';
 import { TemplateManager } from '../utils/template-manager';
 import { logger } from '../utils/logger';
 
@@ -14,12 +16,14 @@ export function createCommand(program: Command, options: CreateCommandOptions = 
     .description('Create a new Node.js application')
     .argument('[name]', 'Project name')
     .action(async (name) => {
+      console.log(chalk.cyan('\n🚀 Welcome to Trove - Modern Node.js Backend Generator\n'));
+      
       try {
         const answers = await inquirer.prompt([
           {
             type: 'input',
             name: 'projectName',
-            message: 'What is your project name?',
+            message: chalk.green('What is your project name?'),
             default: name || 'my-node-app',
             when: !name,
             validate: (input: string) => {
@@ -30,39 +34,80 @@ export function createCommand(program: Command, options: CreateCommandOptions = 
           {
             type: 'list',
             name: 'framework',
-            message: 'Which framework would you like to use?',
+            message: chalk.green('Which framework would you like to use?'),
             default: options.defaultFramework || 'express',
             choices: [
-              'express',
-              'koa',
-              'nestjs',
-              'fastify'
+              {
+                name: chalk.blue('Express.js') + chalk.gray(' - Fast, unopinionated, minimalist web framework'),
+                value: 'express'
+              },
+              {
+                name: chalk.blue('Koa.js') + chalk.gray(' - Modern & lightweight web framework'),
+                value: 'koa'
+              },
+              {
+                name: chalk.blue('NestJS') + chalk.gray(' - Progressive Node.js framework for scalable apps'),
+                value: 'nestjs'
+              },
+              {
+                name: chalk.blue('Fastify') + chalk.gray(' - Fast and low overhead web framework'),
+                value: 'fastify'
+              }
             ]
           },
           {
             type: 'list',
             name: 'database',
-            message: 'Which database would you like to use?',
+            message: chalk.green('Which database would you like to use?'),
             default: options.defaultDatabase || 'mongodb',
             choices: [
-              'mongodb',
-              'postgresql',
-              'mysql',
-              'skip'
+              {
+                name: chalk.yellow('MongoDB') + chalk.gray(' - NoSQL database for modern apps'),
+                value: 'mongodb'
+              },
+              {
+                name: chalk.yellow('PostgreSQL') + chalk.gray(' - Advanced open source SQL database'),
+                value: 'postgresql'
+              },
+              {
+                name: chalk.yellow('MySQL') + chalk.gray(' - Popular open source SQL database'),
+                value: 'mysql'
+              },
+              {
+                name: chalk.gray('Skip database setup'),
+                value: 'skip'
+              }
             ]
           },
           {
             type: 'list',
             name: 'auth',
-            message: 'Which authentication method would you like to use?',
+            message: chalk.green('Which authentication method would you like to use?'),
             choices: [
-              'jwt',
-              'session',
-              'oauth',
-              'skip'
+              {
+                name: chalk.magenta('JWT') + chalk.gray(' - JSON Web Token based authentication'),
+                value: 'jwt'
+              },
+              {
+                name: chalk.magenta('Session') + chalk.gray(' - Traditional session-based auth'),
+                value: 'session'
+              },
+              {
+                name: chalk.magenta('OAuth') + chalk.gray(' - Social authentication (Google, GitHub, etc.)'),
+                value: 'oauth'
+              },
+              {
+                name: chalk.gray('Skip authentication setup'),
+                value: 'skip'
+              }
             ]
           }
         ]);
+
+        const spinner = ora({
+          text: chalk.cyan('Creating your awesome project...'),
+          spinner: 'dots'
+        }).start();
 
         const templateManager = new TemplateManager();
         await templateManager.createProject(name || answers.projectName, {
@@ -70,6 +115,23 @@ export function createCommand(program: Command, options: CreateCommandOptions = 
           database: answers.database,
           auth: answers.auth
         });
+
+        spinner.succeed(chalk.green('Project created successfully! 🎉'));
+
+        // Show next steps
+        console.log('\n' + chalk.cyan.bold('Next steps:'));
+        console.log(chalk.white(`  cd ${name || answers.projectName}`));
+        console.log(chalk.white('  npm install'));
+        console.log(chalk.white('  npm run dev'));
+
+        console.log('\n' + chalk.cyan.bold('Available commands:'));
+        console.log(chalk.white('  npm run dev      ') + chalk.gray('- Start development server'));
+        console.log(chalk.white('  npm run build    ') + chalk.gray('- Build for production'));
+        console.log(chalk.white('  npm run test     ') + chalk.gray('- Run tests'));
+        console.log(chalk.white('  npm run lint     ') + chalk.gray('- Lint code'));
+        console.log(chalk.white('  npm run format   ') + chalk.gray('- Format code'));
+
+        console.log('\n' + chalk.green.bold('Happy coding! 🚀\n'));
 
       } catch (error) {
         logger.error('Failed to create project:', error instanceof Error ? error.message : String(error));

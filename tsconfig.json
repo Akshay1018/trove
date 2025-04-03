@@ -36,7 +36,14 @@
     "allowUnusedLabels": true,
     "noEmitHelpers": true,
     "importHelpers": false,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "skipDefaultLibCheck": true,
+    "isolatedModules": false,
+    "noErrorTruncation": true,
+    "disableSizeLimit": true,
+    "useUnknownInCatchVariables": false,
+    "preserveSymlinks": true,
+    "preserveWatchOutput": true
   },
   "include": [
     "src/**/*"
@@ -46,6 +53,8 @@
     "dist",
     "templates",
     "**/*.test.ts",
-    "**/templates/**"
+    "**/templates/**",
+    "**/*.spec.ts",
+    "coverage"
   ]
-} 
+}

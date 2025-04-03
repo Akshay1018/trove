@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
-import { TemplateOptions, TemplateFile, FrameworkTemplate } from '../types/template';
+import { TemplateOptions, FrameworkTemplate } from '../types/template';
 import { logger } from './logger';
 import ejs from 'ejs';
 
