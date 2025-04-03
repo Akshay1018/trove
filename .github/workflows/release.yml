@@ -18,6 +18,16 @@ jobs:
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install Dependencies with npm install (Check for consistency)
+        run: npm install --package-lock-only
+
+      - name: Check for Lockfile Changes
+        run: |
+          if [ -n "$(git status --porcelain package-lock.json)" ]; then
+            echo "::error file=release.yml::Error: package-lock.json is out of sync with package.json. Please update the lock file and commit the changes."
+            exit 1
+          fi
 
       - name: Install dependencies
         run: npm ci
