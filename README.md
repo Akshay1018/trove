@@ -284,8 +284,8 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 3. Run in development mode
 
 ```bash
-git clone https://github.com/yourusername/trove-cli.git
-cd trove-cli
+git clone https://github.com/Akshay1018/trove.git
+cd trove
 npm install
 npm run dev
 ```
@@ -294,7 +294,7 @@ npm run dev
 
 - GitHub Issues: [Report a bug](https://github.com/Akshay1018/trove/issues)
 - Email: ak715173@gmail.com
-<!-- - Documentation: [Full documentation](https://trovecli.dev/docs) -->
+<!-- - Documentation: [Full documentation](https://github.com/Akshay1018/trove/wiki) -->
 
 ## 🗺️ Roadmap
 
