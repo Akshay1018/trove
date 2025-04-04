@@ -1,0 +1,30 @@
+{
+  "name": "jwt",
+  "description": "JWT authentication with bcrypt for password hashing",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/bcryptjs": "^2.4.6"
+  },
+  "files": [
+    {
+      "path": "src/middleware/auth.ts",
+      "content": "import { Request, Response, NextFunction } from 'express';\nimport jwt from 'jsonwebtoken';\nimport { logger } from '../utils/logger';\n\nexport interface AuthRequest extends Request {\n  user?: any;\n}\n\nexport const auth = async (req: AuthRequest, res: Response, next: NextFunction) => {\n  try {\n    const token = req.header('Authorization')?.replace('Bearer ', '');\n\n    if (!token) {\n      throw new Error();\n    }\n\n    const secret = process.env.JWT_SECRET || 'your-secret-key';\n    const decoded = jwt.verify(token, secret);\n    req.user = decoded;\n\n    next();\n  } catch (error) {\n    logger.error('Authentication failed');\n    res.status(401).json({ error: 'Please authenticate' });\n  }\n};\n",
+      "isConfig": false
+    },
+    {
+      "path": "src/utils/auth.ts",
+      "content": "import jwt from 'jsonwebtoken';\nimport bcrypt from 'bcryptjs';\n\nexport const generateToken = (payload: any): string => {\n  const secret = process.env.JWT_SECRET || 'your-secret-key';\n  return jwt.sign(payload, secret, { expiresIn: '24h' });\n};\n\nexport const hashPassword = async (password: string): Promise<string> => {\n  const salt = await bcrypt.genSalt(10);\n  return bcrypt.hash(password, salt);\n};\n\nexport const comparePassword = async (password: string, hash: string): Promise<boolean> => {\n  return bcrypt.compare(password, hash);\n};\n",
+      "isConfig": false
+    },
+    {
+      "path": ".env",
+      "content": "JWT_SECRET=your-secret-key-change-this-in-production\n",
+      "isConfig": true,
+      "append": true
+    }
+  ]
+} 

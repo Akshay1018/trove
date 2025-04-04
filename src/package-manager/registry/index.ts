@@ -1,14 +1,14 @@
-import { DependencyRegistry } from '../types';
+import { Framework } from '../../types/template';
+import { Dependencies } from '../../types/package-manager';
 import { expressDependencies } from './express';
 import { koaDependencies } from './koa';
 import { nestDependencies } from './nest';
 import { fastifyDependencies } from './fastify';
 
-export const dependencyRegistry: DependencyRegistry = {
+export const frameworkDependencyRegistry: { [key in 'express' | 'koa' | 'nestjs']: Dependencies } = {
   express: expressDependencies,
   koa: koaDependencies,
-  nest: nestDependencies,
-  fastify: fastifyDependencies
+  nestjs: nestDependencies
 };
 
 export * from './express';

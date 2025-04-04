@@ -1,0 +1,30 @@
+{
+  "name": "express-base",
+  "description": "Express.js base template",
+  "files": [
+    {
+      "source": "src/app.ts",
+      "target": "src/app.ts"
+    },
+    {
+      "source": "src/server.ts",
+      "target": "src/server.ts"
+    },
+    {
+      "source": "src/routes/index.ts",
+      "target": "src/routes/index.ts"
+    },
+    {
+      "source": "src/controllers/index.ts",
+      "target": "src/controllers/index.ts"
+    },
+    {
+      "source": "src/middleware/index.ts",
+      "target": "src/middleware/index.ts"
+    },
+    {
+      "source": "src/config/index.ts",
+      "target": "src/config/index.ts"
+    }
+  ]
+} 

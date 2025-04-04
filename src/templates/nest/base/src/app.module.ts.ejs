@@ -1,0 +1,38 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+<% if (database === 'mongodb') { %>import { MongooseModule } from '@nestjs/mongoose';<% } %>
+<% if (database === 'postgres' || database === 'mysql') { %>import { TypeOrmModule } from '@nestjs/typeorm';<% } %>
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    <% if (database === 'mongodb') { %>MongooseModule.forRoot(process.env.MONGODB_URI),<% } %>
+    <% if (database === 'postgres') { %>TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT, 10),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
+      autoLoadEntities: true,
+      synchronize: process.env.NODE_ENV !== 'production',
+    }),<% } %>
+    <% if (database === 'mysql') { %>TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT, 10),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
+      autoLoadEntities: true,
+      synchronize: process.env.NODE_ENV !== 'production',
+    }),<% } %>
+    AuthModule,
+    UsersModule,
+  ],
+})
+export class AppModule {} 

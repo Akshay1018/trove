@@ -1,0 +1,10 @@
+{
+  "name": "mongodb",
+  "description": "MongoDB database template",
+  "files": [
+    {
+      "source": "src/config/database.ts",
+      "target": "src/config/database.ts"
+    }
+  ]
+} 

@@ -1,0 +1,58 @@
+{
+  "name": "koa-base",
+  "description": "Base template for Koa.js applications",
+  "files": [
+    {
+      "source": "src/index.ts",
+      "target": "src/index.ts"
+    },
+    {
+      "source": "src/routes/index.ts",
+      "target": "src/routes/index.ts"
+    },
+    {
+      "source": "src/controllers/example.controller.ts",
+      "target": "src/controllers/example.controller.ts"
+    },
+    {
+      "source": "src/utils/logger.ts",
+      "target": "src/utils/logger.ts"
+    },
+    {
+      "source": "src/middleware/error-handler.ts",
+      "target": "src/middleware/error-handler.ts"
+    },
+    {
+      "source": "package.json.ejs",
+      "target": "package.json"
+    },
+    {
+      "source": ".env.example",
+      "target": ".env.example"
+    },
+    {
+      "source": ".gitignore",
+      "target": ".gitignore"
+    },
+    {
+      "source": "tsconfig.json",
+      "target": "tsconfig.json"
+    },
+    {
+      "source": ".eslintrc.json",
+      "target": ".eslintrc.json"
+    },
+    {
+      "source": ".prettierrc",
+      "target": ".prettierrc"
+    },
+    {
+      "source": "jest.config.js",
+      "target": "jest.config.js"
+    },
+    {
+      "source": "README.md",
+      "target": "README.md"
+    }
+  ]
+} 
