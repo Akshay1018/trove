@@ -1,0 +1,46 @@
+{
+  "name": "koa-base",
+  "description": "Base template for Koa.js applications",
+  "files": [
+    {
+      "source": "src",
+      "target": "src"
+    },
+    {
+      "source": "test",
+      "target": "test"
+    },
+    {
+      "source": "package.json.ejs",
+      "target": "package.json"
+    },
+    {
+      "source": ".env.example",
+      "target": ".env.example"
+    },
+    {
+      "source": ".gitignore",
+      "target": ".gitignore"
+    },
+    {
+      "source": "tsconfig.json",
+      "target": "tsconfig.json"
+    },
+    {
+      "source": ".eslintrc.json",
+      "target": ".eslintrc.json"
+    },
+    {
+      "source": ".prettierrc",
+      "target": ".prettierrc"
+    },
+    {
+      "source": "jest.config.js",
+      "target": "jest.config.js"
+    },
+    {
+      "source": "README.md",
+      "target": "README.md"
+    }
+  ]
+} 

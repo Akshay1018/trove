@@ -6,14 +6,17 @@ import { createCommand } from './commands/create';
 const program = new Command();
 
 program
-  .name('trove')
+  .name('create-node-backend-temp')
   .description('A CLI tool for creating modern Node.js backend applications')
-  .version(version);
-
-// Add commands
-createCommand(program, {
-  defaultFramework: 'express',
-  defaultDatabase: 'mongodb'
-});
+  .version(version)
+  .argument('<project-name>', 'Project name')
+  .action(async (projectName) => {
+    try {
+      await createCommand(program, { projectName });
+    } catch (error) {
+      console.error('Error:', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
 
 program.parse(process.argv); 

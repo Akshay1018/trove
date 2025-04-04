@@ -1,17 +1,25 @@
-import { Framework, Database, Auth, Cicd } from './index';
-import { BaseTemplate } from './base';
+export type Framework = 'express' | 'koa' | 'nest';
+export type Database = 'mongodb' | 'postgres' | 'mysql' | 'skip';
+export type Auth = 'jwt' | 'passport' | 'skip';
 
 export interface TemplateOptions {
   framework: Framework;
   database?: Database;
   auth?: Auth;
-  cicd?: Cicd;
 }
 
 export interface TemplateFile {
-  path: string;
-  content: string;
-  isConfig?: boolean;
+  source: string;
+  target: string;
+}
+
+export interface BaseTemplate {
+  name: string;
+  description: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  environmentVariables?: Record<string, string>;
+  files: TemplateFile[];
 }
 
 export interface FrameworkTemplate extends BaseTemplate {}

@@ -1,0 +1,14 @@
+{
+  "name": "postgres",
+  "description": "PostgreSQL database template",
+  "files": [
+    {
+      "source": "src/config/database.ts",
+      "target": "src/config/database.ts"
+    },
+    {
+      "source": "src/models/example.model.ts",
+      "target": "src/models/example.model.ts"
+    }
+  ]
+} 

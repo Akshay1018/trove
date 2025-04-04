@@ -1,0 +1,27 @@
+import { Injectable } from '@nestjs/common';
+<% if (database === 'mongodb') { %>import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User } from './entities/user.entity';<% } else { %>import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';<% } %>
+
+@Injectable()
+export class UsersService {
+  constructor(
+    <% if (database === 'mongodb') { %>@InjectModel(User.name) private userModel: Model<User><% } else { %>@InjectRepository(User) private userRepository: Repository<User><% } %>
+  ) {}
+
+  async findByEmail(email: string): Promise<User | null> {
+    <% if (database === 'mongodb') { %>return this.userModel.findOne({ email }).exec();<% } else { %>return this.userRepository.findOne({ where: { email } });<% } %>
+  }
+
+  async create(user: { email: string; password: string; name: string }): Promise<User> {
+    <% if (database === 'mongodb') { %>const newUser = new this.userModel(user);
+    return newUser.save();<% } else { %>const newUser = this.userRepository.create(user);
+    return this.userRepository.save(newUser);<% } %>
+  }
+
+  async findById(id: <% if (database === 'mongodb') { %>string<% } else { %>number<% } %>): Promise<User | null> {
+    <% if (database === 'mongodb') { %>return this.userModel.findById(id).exec();<% } else { %>return this.userRepository.findOne({ where: { id } });<% } %>
+  }
+} 

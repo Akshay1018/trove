@@ -1,310 +1,161 @@
-# Trove CLI
+# Create Node Backend
 
-A powerful and flexible CLI tool for creating modern Node.js backend applications with best practices baked in.
+A powerful and flexible CLI tool for creating modern Node.js backend applications with best practices and CI/CD pipelines baked in.
 
-[![npm version](https://badge.fury.io/js/trove-cli.svg)](https://badge.fury.io/js/trove-cli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.svg?v=101)](https://github.com/ellerbrock/typescript-badges/)
+## Features
 
-## 🌟 Why Trove CLI?
+- 🚀 Multiple Framework Support (Express, Koa, NestJS, Fastify)
+- 📦 Database Integration (MongoDB, PostgreSQL, MySQL)
+- 🔐 Authentication Methods (JWT, Session, OAuth)
+- 🛠️ TypeScript Configuration
+- 📝 ESLint & Prettier Setup
+- 🧪 Testing Setup with Jest
+- 🔄 CI/CD Pipeline Templates
+- 📊 Logging & Error Handling
+- 📚 API Documentation (Swagger/OpenAPI)
 
-### Streamlined Development Experience
+## Roadmap and Testing Status
 
-Traditional backend development often involves:
-- Manually installing and configuring numerous dependencies
-- Setting up project structure from scratch
-- Writing boilerplate code for common features
-- Spending hours configuring CI/CD pipelines
-- Dealing with compatibility issues between different tools
+### Frameworks
+- [x] Express.js - Tested with basic routing, middleware, and error handling
+- [x] Koa.js - Tested with basic routing, middleware, and error handling
+- [ ] NestJS - Pending implementation and testing
+- [ ] Fastify - Pending implementation and testing
 
-Trove CLI eliminates these pain points by providing:
+### Databases
+- [x] MongoDB - Tested with basic CRUD operations
+- [x] PostgreSQL - Tested with basic CRUD operations
+- [ ] MySQL - Pending implementation and testing
+- [x] No Database - Tested skip option
 
-#### 1. **Zero-Config CI/CD Setup**
-- Instant pipeline generation for popular platforms
-- Pre-configured workflows for build, test, and deployment
-- No need to write YAML files manually
-- Built-in best practices for each CI platform
-- Automated secret management instructions
+### Authentication
+- [x] JWT - Tested with register, login, and protected routes
+- [ ] Session-based - Pending implementation and testing
+- [ ] OAuth (Google, GitHub) - Pending implementation and testing
+- [x] No Auth - Tested skip option
 
-#### 2. **Smart Template System**
-- Lightweight yet feature-complete templates
-- Only essential dependencies included
-- No bloated node_modules
-- Framework-specific optimizations
-- Easy to extend and customize
+### Core Features
+- [x] Project Structure Generation
+- [x] Environment Variables Setup
+- [x] TypeScript Configuration
+- [x] ESLint + Prettier Setup
+- [x] Jest Configuration
+- [ ] Swagger/OpenAPI Documentation
+- [ ] Docker Configuration
+- [ ] CI/CD Templates
+- [ ] Rate Limiting
+- [ ] CORS Configuration
+- [ ] API Versioning
+- [ ] Database Migrations
+- [ ] Seeding
+- [ ] Caching
+- [ ] WebSocket Support
+- [ ] File Upload
+- [ ] Email Service Integration
+- [ ] Logging Service Integration
+- [ ] Monitoring Setup
+- [ ] Health Checks
+- [ ] API Documentation
+- [ ] Security Headers
+- [ ] Input Validation
+- [ ] Error Handling
+- [ ] Request ID Tracking
+- [ ] Performance Monitoring
+- [ ] Automated Testing
+  - [ ] Unit Tests
+  - [ ] Integration Tests
+  - [ ] E2E Tests
+- [ ] Development Tools
+  - [ ] Hot Reload
+  - [ ] Debug Configuration
+  - [ ] VS Code Settings
+  - [ ] Git Hooks
 
-#### 3. **Time-Saving Features**
-- 15+ minutes saved on CI/CD configuration
-- 30+ minutes saved on initial project setup
-- Pre-configured testing environment
-- Ready-to-use authentication systems
-- Database integration with best practices
-
-#### 4. **Developer-Friendly Choices**
-- Skip what you don't need (database, auth, tests, CI/CD)
-- Mix and match frameworks with databases
-- Custom configuration options
-- Extensible project structure
-- Modern tooling out of the box
-
-Here's a quick comparison:
-
-| Feature | Manual Setup | Trove CLI |
-|---------|-------------|----------|
-| Initial Setup Time | 1-2 hours | 5 minutes |
-| CI/CD Configuration | 30-60 minutes | 2 minutes |
-| Boilerplate Code | Manual writing | Auto-generated |
-| Best Practices | Manual research | Built-in |
-| Dependencies | Manual selection | Curated selection |
-| Configuration Files | Manual creation | Auto-generated |
-| Learning Curve | Steep | Gentle | 
-
-### Real-World Time Saving Example
-
-**Scenario: Setting up a NestJS API with PostgreSQL and GitHub Actions CI/CD**
-
-**Traditional Setup (90-120 minutes):**
-1. Create NestJS project (10 mins)
-2. Configure TypeORM & PostgreSQL (20 mins)
-   - Install dependencies
-   - Create configuration
-   - Set up entities
-   - Configure migrations
-3. Set up authentication (25 mins)
-   - Install JWT packages
-   - Create auth module
-   - Configure guards
-4. Configure GitHub Actions (35 mins)
-   - Research best practices
-   - Write YAML configuration
-   - Set up environment secrets
-   - Configure test database
-5. Configure Docker (20 mins)
-   - Write Dockerfile
-   - Create docker-compose
-   - Configure environment
-
-**With Trove CLI (5 minutes):**
-```bash
-trove create my-nest-api
-# Interactive prompts:
-# 1. Select NestJS ✓
-# 2. Choose PostgreSQL ✓
-# 3. Select JWT auth ✓
-# 4. Choose GitHub Actions ✓
-# Done! 🚀
-```
-
-Everything is set up with best practices, including:
-- Optimized TypeORM configuration
-- JWT authentication with refresh tokens
-- GitHub Actions workflow with caching
-- Production-ready Dockerfile
-- Automatic database migrations
-- Pre-configured test environment
-
-### Key Differentiator: CI/CD Excellence
-
-While other CLIs focus on just scaffolding, Trove CLI excels in CI/CD automation:
-
-| Feature | Other CLIs | Trove CLI |
-|---------|------------|-----------|
-| CI/CD Setup | Manual or basic templates | Complete pipeline generation with:<br>- Multi-stage workflows<br>- Caching strategies<br>- Secret management<br>- Environment configurations<br>- Docker integration<br>- Automated testing<br>- Database migrations |
-
-## 🚀 Features
-
-- **Multiple Framework Support**
-  - Express.js
-  - Koa.js
-  - NestJS
-  - Fastify
-
-- **Database Integration**
-  - MongoDB with Mongoose
-  - PostgreSQL with TypeORM
-  - MySQL with TypeORM
-
-- **Authentication Options**
-  - JWT Authentication
-  - Session-based Authentication
-  - OAuth 2.0 Integration
-
-- **CI/CD Pipeline Generation**
-  - GitHub Actions
-  - GitLab CI
-  - Bitbucket Pipelines
-  - (Coming Soon: Azure DevOps, CircleCI, Jenkins)
-
-- **Developer Experience**
-  - TypeScript Support
-  - ESLint + Prettier Configuration
-  - Jest Testing Setup
-  - Swagger/OpenAPI Documentation
-  - Hot Reload Development
-  - Docker Support
-
-## 📦 Installation
+## Quick Start
 
 ```bash
-npm install -g trove-cli
-# or
-yarn global add trove-cli
-```
+# Install the CLI globally
+npm install -g create-node-backend-temp
 
-## 🛠️ Quick Start
+# Create a new backend project
+create-backend-app create my-app
 
-Create a new backend application:
+# Navigate to project directory
+cd my-app
 
-```bash
-trove create my-awesome-api
-```
-
-Follow the interactive prompts to configure your project:
-1. Select your preferred framework
-2. Choose database integration
-3. Configure authentication method
-4. Set up CI/CD pipeline
-
-## 📖 Usage Guide
-
-### Creating a New Project
-
-```bash
-trove create <project-name> [options]
-```
-
-#### Options
-
-- \`--framework\`: Specify the framework (express, koa, nest, fastify)
-- \`--database\`: Choose database integration (mongodb, postgres, mysql)
-- \`--auth\`: Select authentication method (jwt, session, oauth)
-- \`--skip-git\`: Skip git initialization
-- \`--skip-install\`: Skip package installation
-- \`--skip-tests\`: Skip test setup
-- \`--skip-ci\`: Skip CI/CD setup
-
-### Project Structure
-
-```
-my-awesome-api/
-├── src/
-│   ├── config/
-│   ├── controllers/
-│   ├── services/
-│   ├── models/
-│   ├── middleware/
-│   ├── routes/
-│   ├── utils/
-│   └── app.ts
-├── tests/
-├── docker/
-├── .github/
-├── package.json
-├── tsconfig.json
-├── .env.example
-└── README.md
-```
-
-## 🧪 Testing
-
-Run tests:
-
-```bash
-npm test
-```
-
-Run tests with coverage:
-
-```bash
-npm run test:coverage
-```
-
-## 🚢 Deployment
-
-### Docker Support
-
-Build the Docker image:
-
-```bash
-docker build -t my-awesome-api .
-```
-
-Run the container:
-
-```bash
-docker run -p 3000:3000 my-awesome-api
-```
-
-### CI/CD Pipeline
-
-Example GitHub Actions workflow:
-
-```yaml
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '18'
-      - name: Install dependencies
-        run: npm ci
-      - name: Run tests
-        run: npm test
-      - name: Build
-        run: npm run build
-```
-
-## 📚 API Documentation
-
-API documentation is automatically generated using Swagger/OpenAPI. Access it at:
-
-```
-http://localhost:3000/api-docs
-```
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### Development Setup
-
-1. Clone the repository
-2. Install dependencies
-3. Run in development mode
-
-```bash
-git clone https://github.com/Akshay1018/trove.git
-cd trove
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
 ```
 
-## 📞 Support
+## Available Commands
 
-- GitHub Issues: [Report a bug](https://github.com/Akshay1018/trove/issues)
-- Email: ak715173@gmail.com
-<!-- - Documentation: [Full documentation](https://github.com/Akshay1018/trove/wiki) -->
+After creating your project, you can run:
 
-## 🗺️ Roadmap
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run test     # Run tests
+npm run lint     # Lint code
+npm run format   # Format code
+```
 
-- [ ] Additional framework support
-- [ ] GraphQL integration
-- [ ] Microservices templates
-- [ ] Kubernetes deployment configurations
-- [ ] Plugin system
-- [ ] Custom template support
+## Framework Options
 
-## ⭐ Show Your Support
+Choose from multiple frameworks:
 
-Give a ⭐️ if this project helped you! 
+- **Express.js** - Fast, unopinionated, minimalist web framework
+- **Koa.js** - Modern & lightweight web framework
+- **NestJS** - Progressive Node.js framework for scalable apps
+- **Fastify** - Fast and low overhead web framework
+
+## Database Options
+
+Integrate with your preferred database:
+
+- **MongoDB** - NoSQL database for modern apps
+- **PostgreSQL** - Advanced open source SQL database
+- **MySQL** - Popular open source SQL database
+
+## Authentication Options
+
+Secure your application with:
+
+- **JWT** - JSON Web Token based authentication
+- **Session** - Traditional session-based auth
+- **OAuth** - Social authentication (Google, GitHub, etc.)
+
+## Project Structure
+
+```
+my-app/
+├── src/
+│   ├── config/         # Configuration files
+│   ├── controllers/    # Route controllers
+│   ├── middleware/     # Custom middleware
+│   ├── models/         # Database models
+│   ├── routes/         # API routes
+│   ├── services/       # Business logic
+│   ├── types/          # TypeScript types
+│   └── utils/          # Utility functions
+├── tests/             # Test files
+├── .env              # Environment variables
+├── .eslintrc        # ESLint configuration
+├── .prettierrc      # Prettier configuration
+├── jest.config.js   # Jest configuration
+├── package.json     # Dependencies and scripts
+└── tsconfig.json    # TypeScript configuration
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT © [Akshay Kumar](https://github.com/Akshay1018)
+
+---
+**Note:** This is a temporary package name for testing. The package will be renamed to `trove-cli` in the final release. 

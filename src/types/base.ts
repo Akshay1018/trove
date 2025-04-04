@@ -1,8 +1,8 @@
 // Framework types
-export type Framework = 'express' | 'nest' | 'fastify' | 'koa';
+export type Framework = 'express' | 'koa' | 'nestjs' | 'fastify';
 export type Database = 'mongodb' | 'postgresql' | 'mysql' | 'skip';
 export type Auth = 'jwt' | 'session' | 'oauth' | 'skip';
-export type Cicd = 'github' | 'gitlab' | 'azure' | 'skip';
+export type Cicd = 'github' | 'gitlab' | 'bitbucket' | 'skip';
 
 // Package related types
 export interface PackageInfo {
@@ -30,8 +30,14 @@ export interface TemplateOptions {
 }
 
 export interface BaseTemplate {
-  files: TemplateFile[];
-  dependencies: string[];
-  devDependencies: string[];
-  environmentVariables: Record<string, string>;
+  name: string;
+  description: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  environmentVariables?: Record<string, string>;
+  files: {
+    path: string;
+    content: string;
+    isConfig?: boolean;
+  }[];
 } 

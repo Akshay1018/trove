@@ -1,0 +1,28 @@
+{
+  "name": "mongodb",
+  "description": "MongoDB integration with Mongoose",
+  "dependencies": {
+    "mongoose": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/mongoose": "^5.11.97"
+  },
+  "files": [
+    {
+      "path": "src/config/database.ts",
+      "content": "import mongoose from 'mongoose';\nimport { logger } from '../utils/logger';\n\nexport async function connectDatabase(): Promise<void> {\n  try {\n    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/<%= projectName %>';\n    await mongoose.connect(mongoUri);\n    logger.info('Connected to MongoDB');\n  } catch (error) {\n    logger.error('MongoDB connection error:', error instanceof Error ? error.message : String(error));\n    process.exit(1);\n  }\n}\n",
+      "isConfig": false
+    },
+    {
+      "path": "src/models/example.model.ts",
+      "content": "import { Schema, model } from 'mongoose';\n\ninterface IExample {\n  name: string;\n  description: string;\n  createdAt: Date;\n  updatedAt: Date;\n}\n\nconst exampleSchema = new Schema<IExample>(\n  {\n    name: {\n      type: String,\n      required: true,\n      trim: true\n    },\n    description: {\n      type: String,\n      required: true\n    }\n  },\n  {\n    timestamps: true\n  }\n);\n\nexport const Example = model<IExample>('Example', exampleSchema);\n",
+      "isConfig": false
+    },
+    {
+      "path": ".env",
+      "content": "MONGODB_URI=mongodb://localhost:27017/<%= projectName %>\n",
+      "isConfig": true,
+      "append": true
+    }
+  ]
+} 
