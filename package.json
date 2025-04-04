@@ -1,5 +1,5 @@
 {
-  "name": "trove",
+  "name": "create-node-backend-temp",
   "version": "1.0.0",
   "description": "A powerful and flexible CLI tool for creating modern Node.js backend applications with best practices and CI/CD pipelines baked in",
   "main": "dist/index.js",
