@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "trove": "./dist/cli.js"
+    "create-backend-app": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc --noEmit false && cp -r templates dist/",
