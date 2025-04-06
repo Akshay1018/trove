@@ -1,0 +1,23 @@
+import { Request, Response, NextFunction } from 'express';
+import { AppError } from '../utils/error';
+
+declare module 'express-session' {
+  interface SessionData {
+    userId: string;
+  }
+}
+
+export const isAuthenticated = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.session.userId) {
+      throw new AppError('Please log in to access this resource', 401);
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+}; 
