@@ -1,0 +1,120 @@
+# <%= projectName %>
+
+A modern Node.js backend application built with <%= framework %><% if (database !== 'skip') { %>, <%= database %><% } %><% if (auth !== 'skip') { %>, and <%= auth %> authentication<% } %>.
+
+## Features
+
+- <%= framework %> REST API
+<% if (database !== 'skip') { %>- <%= database %> database integration<% } %>
+<% if (auth !== 'skip') { %>- <%= auth %> authentication<% } %>
+- TypeScript
+- Error Handling
+- Request Validation
+- Testing with Jest
+- ESLint for code quality
+<% if (ci !== 'skip') { %>- CI/CD with <%= ci %><% } %>
+
+## Prerequisites
+
+- Node.js (v18 or later)
+<% if (database === 'mongodb') { %>- MongoDB<% } %>
+<% if (database === 'postgres') { %>- PostgreSQL<% } %>
+<% if (database === 'mysql') { %>- MySQL<% } %>
+- npm or yarn
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file based on `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Available Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm test` - Run tests
+- `npm run test:coverage` - Run tests with coverage report
+
+## API Endpoints
+
+<% if (auth !== 'skip') { %>### Authentication
+
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user (protected)<% } %>
+
+## Environment Variables
+
+- `PORT` - Server port (default: 3000)
+- `NODE_ENV` - Environment (development/production)
+<% if (database === 'mongodb') { %>- `MONGODB_URI` - MongoDB connection string<% } %>
+<% if (database === 'postgres') { %>
+- `POSTGRES_HOST` - PostgreSQL host
+- `POSTGRES_PORT` - PostgreSQL port
+- `POSTGRES_USER` - PostgreSQL username
+- `POSTGRES_PASSWORD` - PostgreSQL password
+- `POSTGRES_DB` - PostgreSQL database name<% } %>
+<% if (database === 'mysql') { %>
+- `MYSQL_HOST` - MySQL host
+- `MYSQL_PORT` - MySQL port
+- `MYSQL_USER` - MySQL username
+- `MYSQL_PASSWORD` - MySQL password
+- `MYSQL_DB` - MySQL database name<% } %>
+<% if (auth === 'jwt') { %>
+- `JWT_SECRET` - JWT secret key
+- `JWT_EXPIRES_IN` - JWT expiration time<% } %>
+<% if (auth === 'session') { %>
+- `SESSION_SECRET` - Session secret key
+- `SESSION_NAME` - Session cookie name
+- `SESSION_MAX_AGE` - Session max age<% } %>
+<% if (auth === 'oauth') { %>
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `GITHUB_CLIENT_ID` - GitHub OAuth client ID
+- `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret<% } %>
+
+## Project Structure
+
+```
+src/
+├── config/         # Configuration files
+├── controllers/    # Route controllers
+├── middleware/     # Custom middleware
+├── models/         # Database models
+├── routes/         # Route definitions
+├── __tests__/     # Test files
+├── app.ts         # Express app setup
+└── index.ts       # App entry point
+```
+
+## Testing
+
+Tests are written using Jest and Supertest. Run tests with:
+
+```bash
+npm test
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
+
+## License
+
+This project is licensed under the MIT License. 

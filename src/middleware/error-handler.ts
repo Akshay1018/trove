@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 
 export class HttpError extends Error {
@@ -8,18 +8,14 @@ export class HttpError extends Error {
   }
 }
 
-export const errorHandler: ErrorRequestHandler = (
+export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
-  logger.error('Error:', {
-    name: err.name,
-    message: err.message,
-    stack: err.stack,
-  });
-
+  logger.error(`Error: ${err.message}`);
+  
   if (err instanceof HttpError) {
     return res.status(err.statusCode).json({
       error: {
@@ -31,9 +27,7 @@ export const errorHandler: ErrorRequestHandler = (
 
   // Default to 500 server error
   return res.status(500).json({
-    error: {
-      message: 'Internal Server Error',
-      status: 500,
-    },
+    success: false,
+    error: err.message || 'Server Error'
   });
 }; 

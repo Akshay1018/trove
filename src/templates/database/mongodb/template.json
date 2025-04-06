@@ -3,6 +3,10 @@
   "description": "MongoDB database template",
   "files": [
     {
+      "source": "src/models/user.model.ts",
+      "target": "src/models/user.model.ts"
+    },
+    {
       "source": "src/config/database.ts",
       "target": "src/config/database.ts"
     }

@@ -3,24 +3,16 @@
   "description": "JWT authentication template",
   "files": [
     {
-      "source": "src/middleware/auth.ts",
-      "target": "src/middleware/auth.ts"
-    },
-    {
-      "source": "src/utils/auth.ts",
-      "target": "src/utils/auth.ts"
+      "source": "src/middleware/auth.middleware.ts",
+      "target": "src/middleware/auth.middleware.ts"
     },
     {
       "source": "src/controllers/auth.controller.ts",
       "target": "src/controllers/auth.controller.ts"
     },
     {
-      "source": "src/routes/auth.ts",
-      "target": "src/routes/auth.ts"
-    },
-    {
-      "source": "src/models/user.model.ts",
-      "target": "src/models/user.model.ts"
+      "source": "src/routes/auth.routes.ts",
+      "target": "src/routes/auth.routes.ts"
     }
   ]
 } 

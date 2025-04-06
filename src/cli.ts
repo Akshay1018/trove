@@ -8,8 +8,11 @@ const program = new Command();
 program
   .name('create-node-backend-temp')
   .description('A CLI tool for creating modern Node.js backend applications')
-  .version(version)
-  .argument('<project-name>', 'Project name')
+  .version(version);
+
+program
+  .command('create [project-name]')
+  .description('Create a new Node.js backend project')
   .action(async (projectName) => {
     try {
       await createCommand(program, { projectName });

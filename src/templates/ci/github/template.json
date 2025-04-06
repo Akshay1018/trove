@@ -1,0 +1,13 @@
+{
+  "name": "github-actions",
+  "description": "GitHub Actions CI/CD configuration",
+  "files": [
+    {
+      "source": "workflows/ci.yml",
+      "target": ".github/workflows/ci.yml"
+    }
+  ],
+  "directories": [
+    ".github/workflows"
+  ]
+} 

@@ -1,0 +1,82 @@
+image: node:18
+
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  NODE_ENV: test
+
+cache:
+  paths:
+    - node_modules/
+
+# Install dependencies and run tests
+test:
+  stage: test
+  services:
+<% if (database === 'mongodb') { %>
+    - name: mongo:latest
+      alias: mongodb
+<% } else if (database === 'postgres') { %>
+    - name: postgres:latest
+      alias: postgres
+      variables:
+        POSTGRES_DB: test
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+<% } else if (database === 'mysql') { %>
+    - name: mysql:latest
+      alias: mysql
+      variables:
+        MYSQL_DATABASE: test
+        MYSQL_ROOT_PASSWORD: root
+<% } %>
+  script:
+    - npm ci
+    - npm run lint
+    - npm run test:coverage
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+
+# Build the application
+build:
+  stage: build
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+
+# Deploy to staging
+deploy_staging:
+  stage: deploy
+  script:
+    - echo "Deploy to staging server"
+  environment:
+    name: staging
+    url: https://staging.example.com
+  only:
+    - develop
+
+# Deploy to production
+deploy_production:
+  stage: deploy
+  script:
+    - echo "Deploy to production server"
+  environment:
+    name: production
+    url: https://example.com
+  only:
+    - main
+  when: manual 

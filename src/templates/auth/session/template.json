@@ -1,0 +1,22 @@
+{
+  "name": "session",
+  "description": "Session-based authentication template",
+  "files": [
+    {
+      "source": "src/config/session.ts",
+      "target": "src/config/session.ts"
+    },
+    {
+      "source": "src/middleware/auth.middleware.ts",
+      "target": "src/middleware/auth.middleware.ts"
+    },
+    {
+      "source": "src/controllers/auth.controller.ts",
+      "target": "src/controllers/auth.controller.ts"
+    },
+    {
+      "source": "src/routes/auth.routes.ts",
+      "target": "src/routes/auth.routes.ts"
+    }
+  ]
+} 

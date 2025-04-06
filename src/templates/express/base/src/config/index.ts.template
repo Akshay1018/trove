@@ -1,0 +1,37 @@
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
+
+const config = {
+  env: process.env.NODE_ENV || 'development',
+  port: process.env.PORT || 3000,
+  database: {
+    url: process.env.MONGODB_URL || 'mongodb://localhost:27017/my-app',
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET || 'your-secret-key',
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  },
+  cors: {
+    origin: process.env.CORS_ORIGIN || '*',
+    credentials: process.env.CORS_CREDENTIALS === 'true',
+  },
+  logging: {
+    level: process.env.LOG_LEVEL || 'info',
+    format: process.env.LOG_FORMAT || 'dev',
+  },
+};
+
+// Validate required environment variables in production
+if (config.env === 'production') {
+  const requiredEnvVars = ['MONGODB_URL', 'JWT_SECRET'];
+  
+  for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+      throw new Error(`Environment variable ${envVar} is required in production`);
+    }
+  }
+}
+
+export default config; 

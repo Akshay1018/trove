@@ -1,18 +1,24 @@
 import { join, dirname } from 'path';
-import { existsSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, cpSync } from 'fs';
-import { TemplateOptions, FrameworkTemplate } from '../types/template';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { TemplateOptions } from '../types/template';
 import { logger } from './logger';
 import ejs from 'ejs';
 import { resolveDependencies } from '../package-manager/dependency-resolver';
+import { getRequiredDirectories, getRequiredFiles } from '../templates/structure';
+
+// Add TemplateData type
+type TemplateData = Record<string, string | number | boolean>;
 
 export class TemplateManager {
   private readonly templatesPath: string;
-  private dependencies: Record<string, string> = {};
-  private devDependencies: Record<string, string> = {};
+  private dependencies: Record<string, string>;
+  private devDependencies: Record<string, string>;
 
   constructor() {
-    // Look for templates relative to this file's location
-    this.templatesPath = join(dirname(dirname(dirname(__filename))), 'src', 'templates');
+    // Look for templates in the src directory during development
+    this.templatesPath = join(process.cwd(), 'src', 'templates');
+    this.dependencies = {};
+    this.devDependencies = {};
   }
 
   async createProject(projectName: string, options: TemplateOptions): Promise<void> {
@@ -22,108 +28,152 @@ export class TemplateManager {
       if (existsSync(projectPath)) {
         throw new Error(`Directory ${projectName} already exists`);
       }
-      mkdirSync(projectPath, { recursive: true });
 
-      // Resolve dependencies using the dependency resolver
-      const resolvedDeps = resolveDependencies({
-        framework: options.framework,
-        database: options.database,
-        auth: options.auth
+      // Get required directories and files based on options
+      const directories = getRequiredDirectories({ ...options, projectName });
+      const files = getRequiredFiles({ ...options, projectName });
+
+      // Create all required directories
+      directories.forEach(dir => {
+        mkdirSync(join(projectPath, dir), { recursive: true });
       });
 
-      this.dependencies = resolvedDeps.dependencies;
-      this.devDependencies = resolvedDeps.devDependencies;
+      // Resolve dependencies
+      const resolvedDeps = resolveDependencies(options);
+      this.dependencies = resolvedDeps.dependencies.reduce((acc, dep) => {
+        acc[dep] = '^1.0.0'; // Default to ^1.0.0, you might want to specify exact versions
+        return acc;
+      }, {} as Record<string, string>);
+      
+      this.devDependencies = resolvedDeps.devDependencies.reduce((acc, dep) => {
+        acc[dep] = '^1.0.0'; // Default to ^1.0.0, you might want to specify exact versions
+        return acc;
+      }, {} as Record<string, string>);
 
-      // Load and process templates
-      await this.processFrameworkTemplate(projectPath, options);
-      if (options.database && options.database !== 'skip') {
-        await this.processDatabaseTemplate(projectPath, options);
+      // Process each required file
+      for (const file of files) {
+        const targetPath = join(projectPath, file);
+        const fileWithoutExt = file.replace(/\.[^/.]+$/, '');
+        const fileName = file.split('/').pop() || '';
+
+        // Try different template extensions
+        const templateExtensions = ['.template'];
+        let content = '';
+        let templateFound = false;
+
+        for (const ext of templateExtensions) {
+          // Try framework-specific template
+          if (options.framework) {
+            const frameworkTemplate = join(this.templatesPath, options.framework, 'base', file + ext);
+            if (existsSync(frameworkTemplate)) {
+              content = readFileSync(frameworkTemplate, 'utf-8');
+              templateFound = true;
+              break;
+            }
+          }
+
+          // Try database-specific template
+          if (options.database && !templateFound) {
+            const dbTemplate = join(this.templatesPath, 'databases', options.database, file + ext);
+            if (existsSync(dbTemplate)) {
+              content = readFileSync(dbTemplate, 'utf-8');
+              templateFound = true;
+              break;
+            }
+          }
+
+          // Try auth-specific template
+          if (options.auth && !templateFound) {
+            const authTemplate = join(this.templatesPath, 'auth', options.auth, file + ext);
+            if (existsSync(authTemplate)) {
+              content = readFileSync(authTemplate, 'utf-8');
+              templateFound = true;
+              break;
+            }
+          }
+
+          // Try CI-specific template
+          if (options.ci && !templateFound) {
+            if (options.ci === 'github' && file.includes('.github/workflows')) {
+              const ciTemplate = join(this.templatesPath, 'ci', options.ci, 'workflows', 'ci.yml');
+              if (existsSync(ciTemplate)) {
+                content = readFileSync(ciTemplate, 'utf-8');
+                templateFound = true;
+                break;
+              }
+            } else {
+              const ciTemplate = join(this.templatesPath, 'ci', options.ci, fileName);
+              if (existsSync(ciTemplate)) {
+                content = readFileSync(ciTemplate, 'utf-8');
+                templateFound = true;
+                break;
+              }
+            }
+          }
+
+          // Try common template
+          if (!templateFound) {
+            const commonTemplate = join(this.templatesPath, 'common', 'base', fileName + ext);
+            if (existsSync(commonTemplate)) {
+              content = readFileSync(commonTemplate, 'utf-8');
+              templateFound = true;
+              break;
+            }
+          }
+        }
+
+        if (!templateFound) {
+          logger.warn(`Template not found for ${file}`);
+          continue;
+        }
+
+        // Ensure target directory exists
+        mkdirSync(dirname(targetPath), { recursive: true });
+
+        // Process template with EJS
+        content = ejs.render(content, {
+          projectName,
+          ...options,
+          dependencies: this.dependencies,
+          devDependencies: this.devDependencies
+        });
+
+        // Write file
+        writeFileSync(targetPath, content);
       }
-      if (options.auth && options.auth !== 'skip') {
-        await this.processAuthTemplate(projectPath, options);
-      }
 
-      logger.info(`Project ${projectName} created successfully!`);
-      logger.info('\nNext steps:');
-      logger.info(`  cd ${projectName}`);
-      logger.info('  npm install');
-      logger.info('  npm run dev');
-
+      logger.info('Project created successfully');
     } catch (error) {
-      logger.error('Failed to create project:', error instanceof Error ? error.message : String(error));
+      logger.error('Failed to create project:', error);
       throw error;
     }
   }
 
-  private async processFrameworkTemplate(projectPath: string, options: TemplateOptions): Promise<void> {
-    const frameworkPath = join(this.templatesPath, options.framework);
-    const basePath = join(frameworkPath, 'base');
-    const templateConfig = this.loadTemplateConfig(basePath);
-    await this.processTemplate(basePath, projectPath, templateConfig, options);
-  }
-
-  private async processDatabaseTemplate(projectPath: string, options: TemplateOptions): Promise<void> {
-    if (!options.database || options.database === 'skip') return;
-    const databasePath = join(this.templatesPath, 'database', options.database);
-    const templateConfig = this.loadTemplateConfig(databasePath);
-    await this.processTemplate(databasePath, projectPath, templateConfig, options);
-  }
-
-  private async processAuthTemplate(projectPath: string, options: TemplateOptions): Promise<void> {
-    if (!options.auth || options.auth === 'skip') return;
-    const authPath = join(this.templatesPath, 'auth', options.auth);
-    const templateConfig = this.loadTemplateConfig(authPath);
-    await this.processTemplate(authPath, projectPath, templateConfig, options);
-  }
-
-  private loadTemplateConfig(templatePath: string): FrameworkTemplate {
-    const configPath = join(templatePath, 'template.json');
-    if (!existsSync(configPath)) {
-      throw new Error(`Template configuration not found at ${configPath}`);
+  private loadTemplate(path: string): string {
+    const templatePath = join(this.templatesPath, path);
+    if (!existsSync(templatePath)) {
+      throw new Error(`Template not found: ${path}`);
     }
-    const configContent = readFileSync(configPath, 'utf-8');
-    return JSON.parse(configContent) as FrameworkTemplate;
+    return readFileSync(templatePath, 'utf-8');
   }
+}
 
-  private async processTemplate(
-    templatePath: string,
-    projectPath: string,
-    template: FrameworkTemplate,
-    options: TemplateOptions
-  ): Promise<void> {
-    // Process each template file
-    for (const file of template.files) {
-      const sourcePath = join(templatePath, file.source);
-      const targetPath = join(projectPath, file.target);
-      const targetDir = dirname(targetPath);
+export const processTemplate = (
+  templatePath: string,
+  targetPath: string,
+  data: TemplateData
+): void => {
+  // ... existing code ...
+};
 
-      if (!existsSync(targetDir)) {
-        mkdirSync(targetDir, { recursive: true });
-      }
-
-      // Handle directories
-      if (existsSync(sourcePath)) {
-        if (sourcePath.endsWith('.ts') || sourcePath.endsWith('.js') || sourcePath.endsWith('.json') || sourcePath.endsWith('.ejs')) {
-          // Process all text files with EJS
-          let content = readFileSync(sourcePath, 'utf-8');
-          try {
-            content = await ejs.render(content, {
-              projectName: projectPath.split('/').pop(),
-              ...options,
-              dependencies: this.dependencies,
-              devDependencies: this.devDependencies
-            });
-            const finalTargetPath = targetPath.endsWith('.ejs') ? targetPath.slice(0, -4) : targetPath;
-            await writeFileSync(finalTargetPath, content);
-          } catch (error) {
-            logger.error(`Error processing template ${sourcePath}:`, error);
-            throw error;
-          }
-        } else {
-          // Copy other files/directories as is
-          cpSync(sourcePath, targetPath, { recursive: true });
-        }
-      }
-    }
+export const processTemplateString = (
+  template: string,
+  data: Record<string, string | number | boolean>
+): string => {
+  try {
+    return ejs.render(template, data);
+  } catch (error) {
+    logger.error('Error processing template string:', error);
+    return template;
   }
-} 
+}; 

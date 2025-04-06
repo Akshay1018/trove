@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { TemplateManager } from '../utils/template-manager';
 import { logger } from '../utils/logger';
-import { Framework, Database, Auth } from '../types/template';
+import { Framework, Database, Auth, CI } from '../types/template';
 
 interface CreateCommandOptions {
   defaultFramework?: string;
@@ -17,6 +17,7 @@ interface Answers {
   framework: Framework;
   database: Database;
   auth: Auth;
+  ci: CI;
 }
 
 export async function createCommand(program: Command, options: CreateCommandOptions = {}): Promise<void> {
@@ -56,7 +57,7 @@ export async function createCommand(program: Command, options: CreateCommandOpti
         when: !options.defaultDatabase,
         choices: [
           { name: chalk.yellow('MongoDB') + chalk.gray(' - NoSQL database for modern apps'), value: 'mongodb' },
-          { name: chalk.yellow('PostgreSQL') + chalk.gray(' - Advanced open source SQL database'), value: 'postgresql' },
+          { name: chalk.yellow('PostgreSQL') + chalk.gray(' - Advanced open source SQL database'), value: 'postgres' },
           { name: chalk.yellow('MySQL') + chalk.gray(' - Popular open source SQL database'), value: 'mysql' },
           { name: chalk.gray('Skip database setup'), value: 'skip' }
         ]
@@ -71,6 +72,17 @@ export async function createCommand(program: Command, options: CreateCommandOpti
           { name: chalk.magenta('OAuth') + chalk.gray(' - Social authentication (Google, GitHub, etc.)'), value: 'oauth' },
           { name: chalk.gray('Skip authentication setup'), value: 'skip' }
         ]
+      },
+      {
+        type: 'list',
+        name: 'ci',
+        message: chalk.green('Which CI/CD platform would you like to use?'),
+        choices: [
+          { name: chalk.cyan('GitHub Actions') + chalk.gray(' - Modern CI/CD for GitHub'), value: 'github' },
+          { name: chalk.cyan('GitLab CI') + chalk.gray(' - Built-in CI/CD for GitLab'), value: 'gitlab' },
+          { name: chalk.cyan('Bitbucket Pipelines') + chalk.gray(' - Integrated CI/CD for Bitbucket'), value: 'bitbucket' },
+          { name: chalk.gray('Skip CI/CD setup'), value: 'skip' }
+        ]
       }
     ]) as unknown as Answers;
 
@@ -80,17 +92,20 @@ export async function createCommand(program: Command, options: CreateCommandOpti
     }).start();
 
     const templateManager = new TemplateManager();
-    await templateManager.createProject(options.projectName || answers.projectName, {
+    const projectName = options.projectName || answers.projectName;
+    await templateManager.createProject(projectName, {
       framework: options.defaultFramework as Framework || answers.framework,
       database: options.defaultDatabase as Database || answers.database,
-      auth: answers.auth
+      auth: answers.auth,
+      ci: answers.ci,
+      projectName
     });
 
     spinner.succeed(chalk.green('Project created successfully! 🎉'));
 
     // Show next steps
     console.log('\n' + chalk.cyan.bold('Next steps:'));
-    console.log(chalk.white(`  cd ${options.projectName || answers.projectName}`));
+    console.log(chalk.white(`  cd ${projectName}`));
     console.log(chalk.white('  npm install'));
     console.log(chalk.white('  npm run dev'));
 

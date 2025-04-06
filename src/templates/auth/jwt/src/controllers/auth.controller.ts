@@ -1,168 +1,102 @@
-import { Context } from 'koa';
-<% if (database === 'postgres') { %>
-import { UserModel } from '../models/user.model';
-<% } else if (database === 'mongodb') { %>
-import { User } from '../models/user.model';
-<% } %>
-import { generateToken, hashPassword, comparePassword } from '../utils/auth';
-import { logger } from '../utils/logger';
+import { FastifyRequest, FastifyReply } from 'fastify';
+import jwt from 'jsonwebtoken';
+import { User } from '../../models/user.model';
+import { config } from '../../config';
 
-export class AuthController {
-  static async register(ctx: Context) {
+interface RegisterBody {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface LoginBody {
+  email: string;
+  password: string;
+}
+
+export const authController = {
+  async register(request: FastifyRequest<{ Body: RegisterBody }>, reply: FastifyReply) {
     try {
-      const { email, password, name } = ctx.request.body as {
-        email: string;
-        password: string;
-        name: string;
-      };
+      const { email, password, firstName, lastName } = request.body;
 
-      // Validate input
-      if (!email || !password || !name) {
-        ctx.status = 400;
-        ctx.body = { error: 'Email, password, and name are required' };
-        return;
-      }
-
-      // Check if user already exists
-      <% if (database === 'postgres') { %>
-      const existingUser = await UserModel.findByEmail(email);
-      <% } else if (database === 'mongodb') { %>
       const existingUser = await User.findOne({ email });
-      <% } else { %>
-      const existingUser = null;
-      <% } %>
       if (existingUser) {
-        ctx.status = 409;
-        ctx.body = { error: 'User already exists' };
-        return;
+        return reply.status(400).send({ error: 'Email already registered' });
       }
 
-      // Hash password
-      const hashedPassword = await hashPassword(password);
-
-      // Create user
-      <% if (database === 'postgres') { %>
-      const user = await UserModel.create({
+      const user = new User({
         email,
-        password: hashedPassword,
-        name
+        password,
+        firstName,
+        lastName,
       });
-      <% } else if (database === 'mongodb') { %>
-      const user = await User.create({
-        email,
-        password: hashedPassword,
-        name
+
+      await user.save();
+
+      const token = jwt.sign({ userId: user._id }, config.jwtSecret, {
+        expiresIn: '7d',
       });
-      <% } else { %>
-      const user = {
-        id: Date.now(),
-        email,
-        name
-      };
-      <% } %>
 
-      // Generate token
-      const token = generateToken({ id: user.id, email: user.email });
-
-      ctx.status = 201;
-      ctx.body = {
+      return reply.send({
         token,
         user: {
-          id: user.id,
+          id: user._id,
           email: user.email,
-          name: user.name
-        }
-      };
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      });
     } catch (error) {
-      logger.error('Error in register:', error);
-      ctx.status = 500;
-      ctx.body = { error: 'Internal server error' };
+      return reply.status(500).send({ error: 'Internal server error' });
     }
-  }
+  },
 
-  static async login(ctx: Context) {
+  async login(request: FastifyRequest<{ Body: LoginBody }>, reply: FastifyReply) {
     try {
-      const { email, password } = ctx.request.body as {
-        email: string;
-        password: string;
-      };
+      const { email, password } = request.body;
 
-      // Validate input
-      if (!email || !password) {
-        ctx.status = 400;
-        ctx.body = { error: 'Email and password are required' };
-        return;
-      }
-
-      // Find user
-      <% if (database === 'postgres') { %>
-      const user = await UserModel.findByEmail(email);
-      <% } else if (database === 'mongodb') { %>
       const user = await User.findOne({ email });
-      <% } else { %>
-      const user = null;
-      <% } %>
       if (!user) {
-        ctx.status = 401;
-        ctx.body = { error: 'Invalid credentials' };
-        return;
+        return reply.status(401).send({ error: 'Invalid credentials' });
       }
 
-      // Verify password
-      const isValidPassword = await comparePassword(password, user.password);
+      const isValidPassword = await user.comparePassword(password);
       if (!isValidPassword) {
-        ctx.status = 401;
-        ctx.body = { error: 'Invalid credentials' };
-        return;
+        return reply.status(401).send({ error: 'Invalid credentials' });
       }
 
-      // Generate token
-      const token = generateToken({ id: user.id, email: user.email });
+      const token = jwt.sign({ userId: user._id }, config.jwtSecret, {
+        expiresIn: '7d',
+      });
 
-      ctx.body = {
+      return reply.send({
         token,
         user: {
-          id: user.id,
+          id: user._id,
           email: user.email,
-          name: user.name
-        }
-      };
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      });
     } catch (error) {
-      logger.error('Error in login:', error);
-      ctx.status = 500;
-      ctx.body = { error: 'Internal server error' };
+      return reply.status(500).send({ error: 'Internal server error' });
     }
-  }
+  },
 
-  static async me(ctx: Context) {
+  async me(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { user } = ctx as { user: { id: number; email: string } };
-
-      // Find user
-      <% if (database === 'postgres') { %>
-      const userData = await UserModel.findById(user.id);
-      <% } else if (database === 'mongodb') { %>
-      const userData = await User.findById(user.id);
-      <% } else { %>
-      const userData = { id: user.id, email: user.email, name: 'Test User' };
-      <% } %>
-      if (!userData) {
-        ctx.status = 404;
-        ctx.body = { error: 'User not found' };
-        return;
-      }
-
-      ctx.body = {
+      const user = request.user;
+      return reply.send({
         user: {
-          id: userData.id,
-          email: userData.email,
-          name: userData.name
-        }
-      };
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      });
     } catch (error) {
-      logger.error('Error in me:', error);
-      ctx.status = 500;
-      ctx.body = { error: 'Internal server error' };
+      return reply.status(500).send({ error: 'Internal server error' });
     }
-  }
-} 
+  },
+}; 

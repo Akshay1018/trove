@@ -1,0 +1,14 @@
+{
+  "name": "mysql",
+  "description": "MySQL database template",
+  "files": [
+    {
+      "source": "src/config/database.ts",
+      "target": "src/config/database.ts"
+    },
+    {
+      "source": "src/utils/db.ts",
+      "target": "src/utils/db.ts"
+    }
+  ]
+} 
