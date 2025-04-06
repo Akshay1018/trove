@@ -74,11 +74,45 @@ export class TemplateManager {
 
           // Try database-specific template
           if (options.database && !templateFound) {
-            const dbTemplate = join(this.templatesPath, 'databases', options.database, file + ext);
-            if (existsSync(dbTemplate)) {
-              content = readFileSync(dbTemplate, 'utf-8');
+            // Try database-specific base template first
+            const dbBaseTemplate = join(this.templatesPath, 'databases', options.database, 'base', file + ext);
+            if (existsSync(dbBaseTemplate)) {
+              content = readFileSync(dbBaseTemplate, 'utf-8');
               templateFound = true;
               break;
+            }
+
+            // Try database-specific model/entity template
+            if (file.includes('models/') || file.includes('entities/')) {
+              const dbModelTemplate = join(
+                this.templatesPath,
+                'databases',
+                options.database,
+                'base/src',
+                file.includes('models/') ? 'models' : 'entities',
+                fileName + ext
+              );
+              if (existsSync(dbModelTemplate)) {
+                content = readFileSync(dbModelTemplate, 'utf-8');
+                templateFound = true;
+                break;
+              }
+            }
+
+            // Try database-specific config template
+            if (file.includes('config/')) {
+              const dbConfigTemplate = join(
+                this.templatesPath,
+                'databases',
+                options.database,
+                'base/src/config',
+                fileName + ext
+              );
+              if (existsSync(dbConfigTemplate)) {
+                content = readFileSync(dbConfigTemplate, 'utf-8');
+                templateFound = true;
+                break;
+              }
             }
           }
 
