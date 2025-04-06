@@ -1,0 +1,48 @@
+import { Strategy as GitHubStrategy } from 'passport-github2';
+import { config } from '../config';
+import { User } from '../models/user.model';
+
+export const githubStrategy = new GitHubStrategy(
+  {
+    clientID: config.oauth.github.clientId,
+    clientSecret: config.oauth.github.clientSecret,
+    callbackURL: `${config.baseUrl}/auth/github/callback`,
+    scope: ['user:email'],
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      // Check if user exists
+      let user = await User.findOne({ 'oauth.github.id': profile.id });
+
+      if (!user) {
+        // Create new user
+        user = await User.create({
+          email: profile.emails?.[0]?.value,
+          username: profile.username,
+          firstName: profile.displayName?.split(' ')[0],
+          lastName: profile.displayName?.split(' ')[1],
+          oauth: {
+            github: {
+              id: profile.id,
+              accessToken,
+              refreshToken,
+            },
+          },
+          isActive: true,
+        });
+      } else {
+        // Update existing user
+        user.oauth.github = {
+          id: profile.id,
+          accessToken,
+          refreshToken,
+        };
+        await user.save();
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error as Error);
+    }
+  }
+); 

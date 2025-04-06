@@ -1,30 +1,50 @@
 {
   "name": "express-base",
-  "description": "Express.js base template",
+  "description": "Express.js base template with MongoDB and JWT authentication",
   "files": [
     {
       "source": "src/app.ts",
       "target": "src/app.ts"
     },
     {
-      "source": "src/server.ts",
-      "target": "src/server.ts"
-    },
-    {
-      "source": "src/routes/index.ts",
-      "target": "src/routes/index.ts"
-    },
-    {
-      "source": "src/controllers/index.ts",
-      "target": "src/controllers/index.ts"
-    },
-    {
-      "source": "src/middleware/index.ts",
-      "target": "src/middleware/index.ts"
+      "source": "src/index.ts",
+      "target": "src/index.ts"
     },
     {
       "source": "src/config/index.ts",
       "target": "src/config/index.ts"
+    },
+    {
+      "source": "src/config/database.ts",
+      "target": "src/config/database.ts"
+    },
+    {
+      "source": "package.json",
+      "target": "package.json"
+    },
+    {
+      "source": "tsconfig.json",
+      "target": "tsconfig.json"
+    },
+    {
+      "source": ".env.example",
+      "target": ".env.example"
+    },
+    {
+      "source": ".gitignore",
+      "target": ".gitignore"
+    },
+    {
+      "source": ".gitlab-ci.yml",
+      "target": ".gitlab-ci.yml"
     }
+  ],
+  "directories": [
+    "src/routes",
+    "src/controllers",
+    "src/middleware",
+    "src/models",
+    "src/config",
+    "src/__tests__"
   ]
 } 

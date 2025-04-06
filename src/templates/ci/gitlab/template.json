@@ -1,0 +1,10 @@
+{
+  "name": "gitlab-ci",
+  "description": "GitLab CI/CD configuration",
+  "files": [
+    {
+      "source": ".gitlab-ci.yml",
+      "target": ".gitlab-ci.yml"
+    }
+  ]
+} 

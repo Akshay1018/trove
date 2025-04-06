@@ -1,0 +1,26 @@
+{
+  "name": "oauth",
+  "description": "OAuth social authentication template",
+  "files": [
+    {
+      "source": "src/middleware/oauth.ts",
+      "target": "src/middleware/oauth.ts"
+    },
+    {
+      "source": "src/config/oauth.ts",
+      "target": "src/config/oauth.ts"
+    },
+    {
+      "source": "src/controllers/auth.controller.ts",
+      "target": "src/controllers/auth.controller.ts"
+    },
+    {
+      "source": "src/routes/auth.ts",
+      "target": "src/routes/auth.ts"
+    },
+    {
+      "source": "src/services/oauth.service.ts",
+      "target": "src/services/oauth.service.ts"
+    }
+  ]
+} 

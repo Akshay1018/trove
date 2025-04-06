@@ -1,0 +1,57 @@
+import { Schema, Document, Model, model } from 'mongoose';
+
+export interface IBaseDocument extends Document {
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+}
+
+export interface IBaseModel<T extends Document> extends Model<T> {
+  paginate(query: any, options: { page: number; limit: number }): Promise<{
+    docs: T[];
+    total: number;
+    page: number;
+    pages: number;
+  }>;
+}
+
+export const baseSchema = new Schema(
+  {
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (_, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  }
+);
+
+baseSchema.statics.paginate = async function (
+  query: any,
+  { page = 1, limit = 10 }
+) {
+  const skip = (page - 1) * limit;
+  const [docs, total] = await Promise.all([
+    this.find(query).skip(skip).limit(limit),
+    this.countDocuments(query),
+  ]);
+
+  const pages = Math.ceil(total / limit);
+
+  return {
+    docs,
+    total,
+    page,
+    pages,
+  };
+}; 

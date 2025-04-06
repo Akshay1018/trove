@@ -1,0 +1,10 @@
+{
+  "name": "bitbucket-pipelines",
+  "description": "Bitbucket Pipelines CI/CD configuration",
+  "files": [
+    {
+      "source": "bitbucket-pipelines.yml",
+      "target": "bitbucket-pipelines.yml"
+    }
+  ]
+} 
