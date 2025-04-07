@@ -1,0 +1,23 @@
+import { logger } from '../utils/logger';
+
+export interface DatabaseConfig {
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  database: string;
+}
+
+export async function initializeDatabase(config: DatabaseConfig): Promise<void> {
+  try {
+    logger.info('Initializing database connection...');
+    
+    // The actual database initialization will be handled by the specific database adapter
+    // This is just a common interface that will be implemented by each database type
+    
+    logger.info('Database connection initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize database:', error);
+    throw error;
+  }
+} 

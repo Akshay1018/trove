@@ -1,0 +1,195 @@
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
+import { User } from '../../models/user.model';
+import { config } from '../../config';
+import { HttpException } from '../../utils/http-exception';
+import { logger } from '../../utils/logger';
+
+export class AuthController {
+  public register = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+
+      const existingUser = await User.findOne({ email });
+
+      if (existingUser) {
+        throw new HttpException(409, 'User already exists');
+      }
+
+      const user = new User({
+        email,
+        password,
+        firstName,
+        lastName,
+        verificationToken: uuidv4(),
+      });
+
+      await user.save();
+
+      // TODO: Send verification email
+
+      res.status(201).json({
+        message: 'User registered successfully. Please check your email for verification.',
+      });
+    } catch (error) {
+      logger.error('Registration error:', error);
+      res.status(500).json({ message: 'Error creating user' });
+    }
+  };
+
+  public login = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { email, password } = req.body;
+
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        throw new HttpException(401, 'Invalid credentials');
+      }
+
+      const isPasswordValid = await user.comparePassword(password);
+
+      if (!isPasswordValid) {
+        throw new HttpException(401, 'Invalid credentials');
+      }
+
+      if (!user.isVerified) {
+        throw new HttpException(401, 'Please verify your email first');
+      }
+
+      const token = jwt.sign(
+        { userId: user._id },
+        config.jwtSecret,
+        { expiresIn: config.jwtExpiresIn }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      });
+    } catch (error) {
+      logger.error('Login error:', error);
+      res.status(500).json({ message: 'Error logging in' });
+    }
+  };
+
+  public verifyEmail = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { token } = req.params;
+
+      const user = await User.findOne({ verificationToken: token });
+
+      if (!user) {
+        throw new HttpException(400, 'Invalid verification token');
+      }
+
+      user.isVerified = true;
+      user.verificationToken = undefined;
+      await user.save();
+
+      res.json({ message: 'Email verified successfully' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public forgotPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { email } = req.body;
+
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        throw new HttpException(404, 'User not found');
+      }
+
+      user.resetPasswordToken = uuidv4();
+      user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+      await user.save();
+
+      // TODO: Send reset password email
+
+      res.json({
+        message: 'Password reset instructions sent to your email',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public resetPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { token } = req.params;
+      const { password } = req.body;
+
+      const user = await User.findOne({
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: new Date() },
+      });
+
+      if (!user) {
+        throw new HttpException(400, 'Invalid or expired reset token');
+      }
+
+      user.password = password;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+
+      res.json({ message: 'Password reset successful' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Get current user profile
+  static async getProfile(req: Request, res: Response): Promise<void> {
+    try {
+      res.json({
+        message: 'Profile retrieved successfully',
+        user: req.user,
+      });
+    } catch (error) {
+      logger.error('Get profile error:', error);
+      res.status(500).json({ message: 'Error retrieving profile' });
+    }
+  }
+
+  // Logout user
+  static async logout(req: Request, res: Response): Promise<void> {
+    try {
+      // In JWT, we don't need to do anything server-side
+      // The client should remove the token
+      res.json({ message: 'Logged out successfully' });
+    } catch (error) {
+      logger.error('Logout error:', error);
+      res.status(500).json({ message: 'Error logging out' });
+    }
+  }
+} 

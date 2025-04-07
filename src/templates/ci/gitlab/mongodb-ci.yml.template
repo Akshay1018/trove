@@ -1,0 +1,34 @@
+services:
+  - mongo:latest
+
+variables:
+  MONGODB_URI: mongodb://mongo:27017/<%= projectName %>_test
+
+test:mongodb:
+  stage: test
+  script:
+    - npm run test:mongodb
+
+.mongodb_backup:
+  script:
+    - apt-get update && apt-get install -y mongodb-clients
+    - mongodump --uri $MONGODB_URI --archive=backup.gz --gzip
+  artifacts:
+    paths:
+      - backup.gz
+    expire_in: 1 week
+
+backup_staging:
+  extends: .mongodb_backup
+  environment:
+    name: staging
+  only:
+    - develop
+
+backup_production:
+  extends: .mongodb_backup
+  environment:
+    name: production
+  only:
+    - main
+  when: manual 

@@ -1,0 +1,53 @@
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { userModel } from '@/models/user.model';
+import { logger } from '@/utils/logger';
+
+export const login = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  // Render login page with OAuth providers
+  reply.view('auth/login', {
+    providers: ['google', 'github'],
+  });
+};
+
+export const logout = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  try {
+    // Clear session
+    await request.logOut();
+    reply.redirect('/');
+  } catch (error) {
+    logger.error('Logout error:', error);
+    reply.status(500).send({
+      statusCode: 500,
+      error: 'Internal Server Error',
+      message: 'Error during logout',
+    });
+  }
+};
+
+export const getProfile = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  try {
+    const user = await userModel.findById(request.user.id);
+    if (!user) {
+      reply.status(404).send({
+        statusCode: 404,
+        error: 'Not Found',
+        message: 'User not found',
+      });
+      return;
+    }
+
+    // Update last login time
+    await userModel.updateLastLogin(user.id);
+
+    // Return user profile without sensitive information
+    const { password, ...profile } = user;
+    reply.send(profile);
+  } catch (error) {
+    logger.error('Get profile error:', error);
+    reply.status(500).send({
+      statusCode: 500,
+      error: 'Internal Server Error',
+      message: 'Error fetching user profile',
+    });
+  }
+}; 

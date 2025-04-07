@@ -1,0 +1,48 @@
+import { FastifyInstance } from 'fastify';
+import swagger from '@fastify/swagger';
+import { config } from '@/config';
+
+export const registerSwagger = async (fastify: FastifyInstance): Promise<void> => {
+  await fastify.register(swagger, {
+    routePrefix: '/docs',
+    swagger: {
+      info: {
+        title: '<%= projectName %>',
+        description: 'API documentation',
+        version: '1.0.0',
+      },
+      host: `${config.host}:${config.port}`,
+      schemes: ['http', 'https'],
+      consumes: ['application/json'],
+      produces: ['application/json'],
+      tags: [
+        { name: 'System', description: 'System related endpoints' },
+<% if (auth !== 'skip') { %>
+        { name: 'Auth', description: 'Authentication endpoints' },
+<% } %>
+        { name: 'Users', description: 'User management endpoints' },
+      ],
+      securityDefinitions: {
+<% if (auth === 'jwt') { %>
+        bearerAuth: {
+          type: 'apiKey',
+          name: 'Authorization',
+          in: 'header',
+        },
+<% } else if (auth === 'oauth') { %>
+        oauth2: {
+          type: 'oauth2',
+          flow: 'accessCode',
+          authorizationUrl: '/auth/login',
+          tokenUrl: '/auth/token',
+          scopes: {
+            'read:user': 'Read user information',
+            'write:user': 'Modify user information',
+          },
+        },
+<% } %>
+      },
+    },
+    exposeRoute: true,
+  });
+}; 
