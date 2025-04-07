@@ -1,0 +1,76 @@
+import { BaseModel, Model } from './base.model';
+import bcrypt from 'bcryptjs';
+
+export interface User extends BaseModel {
+  email: string;
+  password: string;
+  name: string;
+  role: 'user' | 'admin';
+<% if (auth === 'oauth') { %>
+  provider?: string;
+  provider_id?: string;
+<% } %>
+  is_active: boolean;
+  last_login?: Date;
+}
+
+export class UserModel extends Model<User> {
+  constructor() {
+    super('users');
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.findOne({ email });
+  }
+
+  async create(data: Partial<User>): Promise<User> {
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+    return super.create(data);
+  }
+
+  async update(id: number, data: Partial<User>): Promise<User | null> {
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+    return super.update(id, data);
+  }
+
+  async verifyPassword(user: User, password: string): Promise<boolean> {
+    return bcrypt.compare(password, user.password);
+  }
+
+<% if (auth === 'oauth') { %>
+  async findOrCreateByProvider(
+    provider: string,
+    providerId: string,
+    email: string,
+    name: string
+  ): Promise<User> {
+    const user = await this.findOne({
+      provider,
+      provider_id: providerId,
+    });
+
+    if (user) {
+      return user;
+    }
+
+    return this.create({
+      email,
+      name,
+      provider,
+      provider_id: providerId,
+      role: 'user',
+      is_active: true,
+    });
+  }
+<% } %>
+
+  async updateLastLogin(id: number): Promise<void> {
+    await this.update(id, { last_login: new Date() });
+  }
+}
+
+export const userModel = new UserModel(); 

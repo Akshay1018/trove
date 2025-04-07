@@ -1,0 +1,45 @@
+import { Request, Response, NextFunction } from 'express';
+import session from 'express-session';
+import pgSession from 'connect-pg-simple';
+import { Pool } from 'pg';
+import { config } from '../config';
+
+declare module 'express-session' {
+  interface SessionData {
+    userId: string;
+    isAuthenticated: boolean;
+  }
+}
+
+const pool = new Pool({
+  host: config.postgres.host,
+  port: config.postgres.port,
+  user: config.postgres.user,
+  password: config.postgres.password,
+  database: config.postgres.database,
+});
+
+const PostgresStore = pgSession(session);
+
+export const sessionMiddleware = session({
+  store: new PostgresStore({
+    pool,
+    tableName: 'user_sessions',
+  }),
+  secret: config.sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+  },
+});
+
+export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (req.session.isAuthenticated) {
+    next();
+  } else {
+    res.status(401).json({ message: 'Unauthorized' });
+  }
+}; 

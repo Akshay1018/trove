@@ -1,0 +1,22 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class CreateSessionTable1234567890123 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+      CREATE TABLE "user_sessions" (
+        "sid" varchar NOT NULL COLLATE "default",
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL,
+        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+      );
+      CREATE INDEX "IDX_session_expire" ON "user_sessions" ("expire");
+    `);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+      DROP INDEX "IDX_session_expire";
+      DROP TABLE "user_sessions";
+    `);
+  }
+} 

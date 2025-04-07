@@ -1,0 +1,50 @@
+import fastify, { FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import { logger } from './utils/logger';
+import { initializeDatabase, DatabaseConfig } from './config/database';
+
+export async function createApp(): Promise<FastifyInstance> {
+  const app = fastify({
+    logger: {
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          translateTime: 'HH:MM:ss Z',
+          ignore: 'pid,hostname',
+        },
+      },
+    },
+  });
+
+  // Register plugins
+  await app.register(cors);
+  await app.register(helmet);
+
+  // Initialize database
+  const dbConfig: DatabaseConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '27017', 10),
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME || '<%= projectName %>',
+  };
+
+  await initializeDatabase(dbConfig);
+
+  // Health check route
+  app.get('/health', async () => {
+    return { status: 'ok' };
+  });
+
+  // Register routes
+  app.register(import('./routes/auth.routes'), { prefix: '/api/auth' });
+
+  // Error handler
+  app.setErrorHandler((error, request, reply) => {
+    logger.error(error);
+    reply.status(500).send({ error: 'Internal Server Error' });
+  });
+
+  return app;
+} 

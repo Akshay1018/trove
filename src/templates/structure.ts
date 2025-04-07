@@ -1,19 +1,25 @@
 import { TemplateOptions } from '../types/template';
+import fs from 'fs';
+import path from 'path';
+
+export type Framework = 'express' | 'koa' | 'fastify' | 'nestjs';
+export type Auth = 'jwt' | 'oauth' | 'session';
+export type CI = 'github' | 'gitlab' | 'jenkins' | 'bitbucket';
+export type Database = 'mongodb' | 'postgres' | 'mysql';
+
+export interface FrameworkConfig {
+  files: {
+    base: string[];
+  };
+}
+
+export interface DatabaseConfig {
+  files: {
+    base: string[];
+  };
+}
 
 export const BASE_STRUCTURE = {
-  directories: [
-    'src',
-    'src/config',
-    'src/controllers',
-    'src/models',
-    'src/routes',
-    'src/services',
-    'src/utils',
-    'src/middleware',
-    'src/__tests__',
-    'src/__tests__/unit',
-    'src/__tests__/integration'
-  ],
   files: {
     base: [
       '.gitignore',
@@ -26,138 +32,130 @@ export const BASE_STRUCTURE = {
       'jest.config.js'
     ],
     src: [
-      'src/app.ts',
-      'src/index.ts',
-      'src/config/index.ts'
+      'src/config/index.ts',
+      'src/utils/logger.ts',
+      'src/__tests__/unit/.gitkeep',
+      'src/__tests__/integration/.gitkeep'
     ]
   }
 };
 
-export const FRAMEWORK_SPECIFIC = {
+export const FRAMEWORK_SPECIFIC: Record<Framework, FrameworkConfig> = {
   express: {
-    directories: [],
-    files: [
-      'src/middleware/error.ts',
-      'src/middleware/not-found.ts'
-    ]
+    files: {
+      base: [
+        'frameworks/express/src/app.ts.template',
+        'frameworks/express/src/index.ts.template',
+        'frameworks/express/src/routes/index.ts.template',
+        'frameworks/express/src/middleware/error.middleware.ts.template'
+      ]
+    }
   },
   koa: {
-    directories: [],
-    files: [
-      'src/middleware/error.ts',
-      'src/middleware/not-found.ts'
-    ]
-  },
-  nestjs: {
-    directories: [
-      'src/modules',
-      'src/common',
-      'src/decorators'
-    ],
-    files: [
-      'src/main.ts',
-      'src/app.module.ts'
-    ]
+    files: {
+      base: [
+        'frameworks/koa/src/app.ts.template',
+        'frameworks/koa/src/index.ts.template',
+        'frameworks/koa/src/routes/index.ts.template',
+        'frameworks/koa/src/middleware/error.middleware.ts.template'
+      ]
+    }
   },
   fastify: {
-    directories: [
-      'src/plugins',
-      'src/schemas'
-    ],
-    files: [
-      'src/plugins/swagger.ts',
-      'src/plugins/cors.ts'
-    ]
+    files: {
+      base: [
+        'frameworks/fastify/src/app.ts.template',
+        'frameworks/fastify/src/index.ts.template',
+        'frameworks/fastify/src/routes/index.ts.template',
+        'frameworks/fastify/src/plugins/swagger.ts.template'
+      ]
+    }
+  },
+  nestjs: {
+    files: {
+      base: [
+        'frameworks/nestjs/src/main.ts.template',
+        'frameworks/nestjs/src/app.module.ts.template',
+        'frameworks/nestjs/src/app.controller.ts.template',
+        'frameworks/nestjs/src/app.service.ts.template'
+      ]
+    }
   }
 };
 
-export const DATABASE_SPECIFIC = {
+export const DATABASE_SPECIFIC: Record<Database, DatabaseConfig> = {
   mongodb: {
-    directories: [],
-    files: [
-      'src/config/database.ts',
-      'src/models/base.model.ts'
-    ]
+    files: {
+      base: [
+        'databases/mongodb/config/database.ts.template',
+        'databases/mongodb/models/base.model.ts.template',
+        'databases/mongodb/models/user.model.ts.template',
+        'databases/mongodb/repositories/base.repository.ts.template',
+        'databases/mongodb/repositories/user.repository.ts.template'
+      ]
+    }
   },
   postgres: {
-    directories: [
-      'src/migrations',
-      'src/entities'
-    ],
-    files: [
-      'src/config/database.ts',
-      'src/config/ormconfig.ts'
-    ]
+    files: {
+      base: [
+        'databases/postgres/config/database.ts.template',
+        'databases/postgres/models/base.model.ts.template',
+        'databases/postgres/models/user.model.ts.template',
+        'databases/postgres/repositories/base.repository.ts.template',
+        'databases/postgres/repositories/user.repository.ts.template',
+        'databases/postgres/migrations/001_init.sql.template'
+      ]
+    }
   },
   mysql: {
-    directories: [
-      'src/migrations',
-      'src/entities'
-    ],
-    files: [
-      'src/config/database.ts',
-      'src/config/ormconfig.ts'
-    ]
+    files: {
+      base: [
+        'databases/mysql/config/database.ts.template',
+        'databases/mysql/models/base.model.ts.template',
+        'databases/mysql/models/user.model.ts.template',
+        'databases/mysql/repositories/base.repository.ts.template',
+        'databases/mysql/repositories/user.repository.ts.template',
+        'databases/mysql/migrations/001_init.sql.template'
+      ]
+    }
   }
 };
 
-export const AUTH_SPECIFIC = {
-  jwt: {
-    directories: [],
-    files: [
-      'src/middleware/auth.middleware.ts',
-      'src/controllers/auth.controller.ts',
-      'src/routes/auth.routes.ts',
-      'src/models/user.model.ts',
-      'src/config/auth.ts'
-    ]
-  },
-  session: {
-    directories: [],
-    files: [
-      'src/middleware/session.middleware.ts',
-      'src/controllers/auth.controller.ts',
-      'src/routes/auth.routes.ts',
-      'src/models/user.model.ts',
-      'src/config/auth.ts'
-    ]
-  },
-  oauth: {
-    directories: [
-      'src/strategies'
-    ],
-    files: [
-      'src/strategies/google.strategy.ts',
-      'src/strategies/github.strategy.ts',
-      'src/controllers/auth.controller.ts',
-      'src/routes/auth.routes.ts',
-      'src/models/user.model.ts',
-      'src/config/auth.ts'
-    ]
-  }
+export const AUTH_SPECIFIC: Record<Auth, string[]> = {
+  jwt: [
+    'auth/jwt/middleware/auth.middleware.ts.template',
+    'auth/jwt/controllers/auth.controller.ts.template',
+    'auth/jwt/routes/auth.routes.ts.template'
+  ],
+  oauth: [
+    'auth/oauth/middleware/auth.middleware.ts.template',
+    'auth/oauth/controllers/auth.controller.ts.template',
+    'auth/oauth/routes/auth.routes.ts.template'
+  ],
+  session: [
+    'auth/session/middleware/auth.middleware.ts.template',
+    'auth/session/controllers/auth.controller.ts.template',
+    'auth/session/routes/auth.routes.ts.template'
+  ]
 };
 
-export const CI_SPECIFIC = {
-  github: {
-    directories: [
-      '.github/workflows'
-    ],
-    files: [
-      '.github/workflows/ci.yml'
-    ]
-  },
-  gitlab: {
-    directories: [],
-    files: [
-      '.gitlab-ci.yml'
-    ]
-  },
-  bitbucket: {
-    directories: [],
-    files: [
-      'bitbucket-pipelines.yml'
-    ]
-  }
+export const CI_SPECIFIC: Record<CI, string[]> = {
+  github: [
+    'ci/github/.github/workflows/ci.yml.template',
+    'ci/github/.github/workflows/mongodb.yml.template'
+  ],
+  gitlab: [
+    'ci/gitlab/.gitlab-ci.yml.template',
+    'ci/gitlab/mongodb-ci.yml.template'
+  ],
+  jenkins: [
+    'ci/jenkins/Jenkinsfile.template',
+    'ci/jenkins/mongodb-pipeline.groovy.template'
+  ],
+  bitbucket: [
+    'ci/bitbucket/bitbucket-pipelines.yml.template',
+    'ci/bitbucket/mongodb-pipeline.yml.template'
+  ]
 };
 
 export function getRequiredFiles(options: TemplateOptions): string[] {
@@ -165,261 +163,108 @@ export function getRequiredFiles(options: TemplateOptions): string[] {
 
   // Add framework-specific files
   if (options.framework) {
-    files = [...files, ...(FRAMEWORK_SPECIFIC[options.framework]?.files || [])];
+    const frameworkConfig = FRAMEWORK_SPECIFIC[options.framework];
+    if (frameworkConfig) {
+      files = [...files, ...frameworkConfig.files.base];
+    }
   }
 
-  // Add database-specific files if database is selected
+  // Add database-specific files
   if (options.database && options.database !== 'skip') {
-    files = [...files, ...(DATABASE_SPECIFIC[options.database]?.files || [])];
+    const dbConfig = DATABASE_SPECIFIC[options.database];
+    if (dbConfig) {
+      files = [...files, ...dbConfig.files.base];
+    }
   }
 
-  // Add auth-specific files if auth is selected
+  // Add auth-specific files
   if (options.auth && options.auth !== 'skip') {
-    files = [...files, ...(AUTH_SPECIFIC[options.auth]?.files || [])];
+    const authConfig = AUTH_SPECIFIC[options.auth];
+    if (authConfig) {
+      files = [...files, ...authConfig];
+    }
   }
 
-  // Add CI-specific files if CI is selected
+  // Add CI-specific files
   if (options.ci && options.ci !== 'skip') {
-    files = [...files, ...(CI_SPECIFIC[options.ci]?.files || [])];
+    const ciConfig = CI_SPECIFIC[options.ci];
+    if (ciConfig) {
+      files = [...files, ...ciConfig];
+    }
   }
 
   return files;
 }
 
-export function getRequiredDirectories(options: TemplateOptions): string[] {
-  let directories = [...BASE_STRUCTURE.directories];
+export function createDirectoryStructure(options: TemplateOptions): void {
+  // Create base directories
+  const baseDirectories = [
+    'src',
+    'src/config',
+    'src/controllers',
+    'src/routes',
+    'src/services',
+    'src/utils',
+    'src/middleware',
+    'src/__tests__',
+    'src/__tests__/unit',
+    'src/__tests__/integration'
+  ];
 
   // Add framework-specific directories
-  if (options.framework) {
-    directories = [...directories, ...(FRAMEWORK_SPECIFIC[options.framework]?.directories || [])];
+  if (options.framework === 'nestjs') {
+    baseDirectories.push(
+      'src/modules',
+      'src/decorators',
+      'src/filters',
+      'src/guards',
+      'src/interceptors',
+      'src/pipes'
+    );
+  } else if (options.framework === 'fastify') {
+    baseDirectories.push(
+      'src/plugins',
+      'src/schemas'
+    );
   }
 
-  // Add database-specific directories if database is selected
+  // Add database-specific directories
   if (options.database && options.database !== 'skip') {
-    directories = [...directories, ...(DATABASE_SPECIFIC[options.database]?.directories || [])];
+    baseDirectories.push(
+      'src/models',
+      'src/repositories'
+    );
   }
 
-  // Add auth-specific directories if auth is selected
-  if (options.auth && options.auth !== 'skip') {
-    directories = [...directories, ...(AUTH_SPECIFIC[options.auth]?.directories || [])];
-  }
-
-  // Add CI-specific directories if CI is selected
-  if (options.ci && options.ci !== 'skip') {
-    directories = [...directories, ...(CI_SPECIFIC[options.ci]?.directories || [])];
-  }
-
-  return directories;
+  // Create directories
+  baseDirectories.forEach(dir => {
+    const targetDir = path.join(options.projectName || '', dir);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+  });
 }
 
-export const getProjectStructure = (options: TemplateOptions) => ({
-  directories: getRequiredDirectories(options),
-  configFiles: [
-    {
-      name: '.env.example',
-      content: getEnvTemplate(options)
-    },
-    {
-      name: '.gitignore',
-      content: getGitignoreTemplate()
-    },
-    {
-      name: 'package.json',
-      content: getPackageTemplate(options)
-    },
-    {
-      name: 'tsconfig.json',
-      content: getTsConfigTemplate()
-    },
-    {
-      name: '.eslintrc.json',
-      content: getEslintTemplate()
-    },
-    {
-      name: '.prettierrc',
-      content: getPrettierTemplate()
-    }
-  ]
-});
+export function createProjectStructure(options: TemplateOptions): void {
+  // Create directories
+  createDirectoryStructure(options);
 
-const getEnvTemplate = (options: TemplateOptions) => {
-  let template = `
-# Application
-PORT=3000
-NODE_ENV=development
-`;
+  // Get required files
+  const files = getRequiredFiles(options);
 
-  // Add database configuration
-  if (options.database === 'postgres') {
-    template += `
-# PostgreSQL
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_DATABASE=app
-DB_SCHEMA=public
-`;
-  } else if (options.database === 'mysql') {
-    template += `
-# MySQL
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=root
-DB_DATABASE=app
-DB_CHARSET=utf8mb4
-`;
-  } else if (options.database === 'mongodb') {
-    template += `
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/app
-`;
-  }
+  // Copy files
+  files.forEach(file => {
+    const templatePath = path.join('templates', file);
+    const targetPath = path.join(options.projectName || '', file.replace(/\.template$/, ''));
 
-  // Add auth configuration
-  if (options.auth === 'jwt') {
-    template += `
-# JWT
-JWT_SECRET=your-jwt-secret
-JWT_EXPIRES_IN=24h
-`;
-  } else if (options.auth === 'session') {
-    template += `
-# Session
-SESSION_SECRET=your-session-secret
-SESSION_NAME=connect.sid
-SESSION_MAX_AGE=86400000
-`;
-  } else if (options.auth === 'oauth') {
-    template += `
-# OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
-
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
-GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
-`;
-  }
-
-  return template;
-};
-
-const getGitignoreTemplate = () => {
-  return `# Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build output
-dist/
-build/
-*.tsbuildinfo
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# IDE and editor files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# Operating System
-.DS_Store
-Thumbs.db
-
-# Test coverage
-coverage/
-
-# Logs
-logs/
-*.log`;
-};
-
-const getPackageTemplate = (options: TemplateOptions) => {
-  return {
-    name: options.projectName,
-    version: '1.0.0',
-    description: 'A modern Node.js backend application',
-    main: 'dist/index.js',
-    scripts: {
-      start: 'node dist/index.js',
-      dev: 'ts-node-dev --respawn src/index.ts',
-      build: 'tsc',
-      lint: 'eslint . --ext .ts',
-      test: 'jest',
-      'test:coverage': 'jest --coverage'
-    }
-  };
-};
-
-const getTsConfigTemplate = () => {
-  return {
-    compilerOptions: {
-      target: 'ES2020',
-      module: 'commonjs',
-      lib: ['ES2020'],
-      outDir: './dist',
-      rootDir: './src',
-      strict: true,
-      esModuleInterop: true,
-      skipLibCheck: true,
-      forceConsistentCasingInFileNames: true,
-      moduleResolution: 'node',
-      resolveJsonModule: true,
-      baseUrl: '.',
-      paths: {
-        '@/*': ['src/*']
+    if (fs.existsSync(templatePath)) {
+      const targetDir = path.dirname(targetPath);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
       }
-    },
-    include: ['src/**/*'],
-    exclude: ['node_modules', 'dist', '**/*.test.ts']
-  };
-};
-
-const getEslintTemplate = () => {
-  return {
-    parser: '@typescript-eslint/parser',
-    extends: [
-      'eslint:recommended',
-      'plugin:@typescript-eslint/recommended'
-    ],
-    plugins: ['@typescript-eslint'],
-    env: {
-      node: true,
-      es6: true,
-      jest: true
-    },
-    parserOptions: {
-      ecmaVersion: 2020,
-      sourceType: 'module'
-    },
-    rules: {
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      'no-console': ['warn', { allow: ['warn', 'error'] }]
+      fs.copyFileSync(templatePath, targetPath);
+    } else {
+      console.warn(`warn: Template not found for ${file}`);
     }
-  };
-};
-
-const getPrettierTemplate = () => {
-  return {
-    semi: true,
-    trailingComma: 'es5',
-    singleQuote: true,
-    printWidth: 80,
-    tabWidth: 2,
-    useTabs: false,
-    bracketSpacing: true,
-    arrowParens: 'avoid',
-    endOfLine: 'lf'
-  };
-}; 
+  });
+} 

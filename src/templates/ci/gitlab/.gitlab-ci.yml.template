@@ -1,0 +1,59 @@
+image: node:18
+
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  NODE_ENV: test
+
+cache:
+  paths:
+    - node_modules/
+
+install_dependencies:
+  stage: .pre
+  script:
+    - npm ci
+
+lint:
+  stage: test
+  script:
+    - npm run lint
+
+test:
+  stage: test
+  services:
+    - mongo:latest
+  variables:
+    MONGODB_URI: mongodb://mongo:27017/<%= projectName %>_test
+  script:
+    - npm run test
+
+build:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+
+deploy_staging:
+  stage: deploy
+  script:
+    - echo "Deploy to staging server"
+  environment:
+    name: staging
+  only:
+    - develop
+
+deploy_production:
+  stage: deploy
+  script:
+    - echo "Deploy to production server"
+  environment:
+    name: production
+  only:
+    - main
+  when: manual 

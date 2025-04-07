@@ -1,0 +1,27 @@
+import { DataSource } from 'typeorm';
+import { config } from './index';
+
+export const AppDataSource = new DataSource({
+  type: 'mysql',
+  host: config.mysql.host,
+  port: config.mysql.port,
+  username: config.mysql.username,
+  password: config.mysql.password,
+  database: config.mysql.database,
+  synchronize: process.env.NODE_ENV === 'development',
+  logging: process.env.NODE_ENV === 'development',
+  entities: ['src/entities/**/*.ts'],
+  migrations: ['src/migrations/**/*.ts'],
+  subscribers: ['src/subscribers/**/*.ts'],
+  charset: config.mysql.charset,
+});
+
+export async function initializeDatabase(): Promise<void> {
+  try {
+    await AppDataSource.initialize();
+    console.log('Database connection initialized');
+  } catch (error) {
+    console.error('Error initializing database connection:', error);
+    throw error;
+  }
+} 

@@ -1,0 +1,114 @@
+import { query } from '@/config/database';
+
+export interface BaseModel {
+  id: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export class Model<T extends BaseModel> {
+  protected tableName: string;
+
+  constructor(tableName: string) {
+    this.tableName = tableName;
+  }
+
+  async findAll(): Promise<T[]> {
+    return query<T>(`SELECT * FROM ${this.tableName} ORDER BY created_at DESC`);
+  }
+
+  async findById(id: number): Promise<T | null> {
+    const results = await query<T>(
+      `SELECT * FROM ${this.tableName} WHERE id = $1`,
+      [id]
+    );
+    return results[0] || null;
+  }
+
+  async findOne(conditions: Partial<T>): Promise<T | null> {
+    const keys = Object.keys(conditions);
+    const values = Object.values(conditions);
+    const whereClause = keys
+      .map((key, index) => `${key} = $${index + 1}`)
+      .join(' AND ');
+
+    const results = await query<T>(
+      `SELECT * FROM ${this.tableName} WHERE ${whereClause} LIMIT 1`,
+      values
+    );
+    return results[0] || null;
+  }
+
+  async create(data: Partial<T>): Promise<T> {
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+    const columns = keys.join(', ');
+
+    const results = await query<T>(
+      `INSERT INTO ${this.tableName} (${columns}) 
+       VALUES (${placeholders}) 
+       RETURNING *`,
+      values
+    );
+    return results[0];
+  }
+
+  async update(id: number, data: Partial<T>): Promise<T | null> {
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    const setClause = keys
+      .map((key, index) => `${key} = $${index + 1}`)
+      .join(', ');
+
+    const results = await query<T>(
+      `UPDATE ${this.tableName} 
+       SET ${setClause}, updated_at = NOW() 
+       WHERE id = $${keys.length + 1} 
+       RETURNING *`,
+      [...values, id]
+    );
+    return results[0] || null;
+  }
+
+  async delete(id: number): Promise<boolean> {
+    const results = await query<T>(
+      `DELETE FROM ${this.tableName} WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    return results.length > 0;
+  }
+
+  async count(conditions: Partial<T> = {}): Promise<number> {
+    const keys = Object.keys(conditions);
+    const values = Object.values(conditions);
+    const whereClause = keys.length
+      ? `WHERE ${keys.map((key, i) => `${key} = $${i + 1}`).join(' AND ')}`
+      : '';
+
+    const results = await query<{ count: string }>(
+      `SELECT COUNT(*) as count FROM ${this.tableName} ${whereClause}`,
+      values
+    );
+    return parseInt(results[0].count, 10);
+  }
+
+  async exists(conditions: Partial<T>): Promise<boolean> {
+    const count = await this.count(conditions);
+    return count > 0;
+  }
+
+  protected async transaction<R>(
+    callback: () => Promise<R>
+  ): Promise<R> {
+    const client = await query('BEGIN');
+    try {
+      const result = await callback();
+      await query('COMMIT');
+      return result;
+    } catch (error) {
+      await query('ROLLBACK');
+      throw error;
+    }
+  }
+} 
