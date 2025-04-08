@@ -4,6 +4,12 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 import { User } from '../models/user.model';
 import bcrypt from 'bcryptjs';
+import { SessionData } from 'express-session';
+import { UnauthorizedError } from '../utils/errors';
+import { AuthService } from '../services/auth.service';
+import { UserService } from '../services/user.service';
+
+const authService = new AuthService(new UserService());
 
 // Configure session middleware
 export const sessionMiddleware = session({
@@ -57,21 +63,68 @@ export const logout = (req: Request, res: Response) => {
   });
 };
 
+interface CustomSessionData extends SessionData {
+  userId?: string;
+  email?: string;
+}
+
+/**
+ * Middleware to check if user is authenticated
+ */
 export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
+    if (!req.session?.userId) {
+      throw new UnauthorizedError('Authentication required');
     }
 
-    const user = await User.findById(req.session.userId);
-    if (!user) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
+    const user = await authService.verifySession(req.session);
+    req.user = {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+    };
 
-    req.user = user;
     next();
   } catch (error) {
-    logger.error('Authentication error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    next(error);
   }
+};
+
+/**
+ * Middleware to check if user is NOT authenticated
+ */
+export const isNotAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (req.session?.userId) {
+    return next(new UnauthorizedError('Already authenticated'));
+  }
+  next();
+};
+
+/**
+ * Middleware to attach current user to request if session exists
+ */
+export const attachUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (req.session?.userId) {
+      const user = await authService.getCurrentUser(req.session.userId);
+      req.user = {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+      };
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Middleware to refresh session on activity
+ */
+export const refreshSession = (req: Request, res: Response, next: NextFunction) => {
+  if (req.session?.userId) {
+    req.session.touch();
+  }
+  next();
 }; 

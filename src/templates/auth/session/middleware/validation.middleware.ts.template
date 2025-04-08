@@ -1,0 +1,65 @@
+import { Request, Response, NextFunction } from 'express';
+import { BadRequestError } from '../utils/errors';
+
+/**
+ * Validate registration request
+ */
+export const validateRegistration = (req: Request, res: Response, next: NextFunction): void => {
+  const { email, password, name } = req.body;
+
+  const errors: string[] = [];
+
+  // Validate email
+  if (!email) {
+    errors.push('Email is required');
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push('Invalid email format');
+  }
+
+  // Validate password
+  if (!password) {
+    errors.push('Password is required');
+  } else if (password.length < 8) {
+    errors.push('Password must be at least 8 characters long');
+  } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+    errors.push('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+  }
+
+  // Validate name (optional)
+  if (name && (typeof name !== 'string' || name.length < 2)) {
+    errors.push('Name must be at least 2 characters long');
+  }
+
+  if (errors.length > 0) {
+    throw new BadRequestError('Validation failed', errors);
+  }
+
+  next();
+};
+
+/**
+ * Validate login request
+ */
+export const validateLogin = (req: Request, res: Response, next: NextFunction): void => {
+  const { email, password } = req.body;
+
+  const errors: string[] = [];
+
+  // Validate email
+  if (!email) {
+    errors.push('Email is required');
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push('Invalid email format');
+  }
+
+  // Validate password
+  if (!password) {
+    errors.push('Password is required');
+  }
+
+  if (errors.length > 0) {
+    throw new BadRequestError('Validation failed', errors);
+  }
+
+  next();
+}; 

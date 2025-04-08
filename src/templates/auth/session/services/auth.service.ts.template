@@ -1,0 +1,89 @@
+import { UserService } from './user.service';
+import { BadRequestError, UnauthorizedError } from '../utils/errors';
+import { validatePassword, hashPassword } from '../utils/auth';
+import { Session } from 'express-session';
+
+export class AuthService {
+  constructor(private userService: UserService) {}
+
+  /**
+   * Register a new user
+   */
+  async register(data: { email: string; password: string; name?: string }) {
+    const existingUser = await this.userService.findByEmail(data.email);
+    if (existingUser) {
+      throw new BadRequestError('User already exists');
+    }
+
+    const hashedPassword = await hashPassword(data.password);
+    const user = await this.userService.create({
+      ...data,
+      password: hashedPassword,
+    });
+
+    return user;
+  }
+
+  /**
+   * Authenticate user and create session
+   */
+  async login(email: string, password: string, session: Session) {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    const isPasswordValid = await validatePassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    // Set session data
+    session.userId = user._id.toString();
+    session.email = user.email;
+
+    return user;
+  }
+
+  /**
+   * Clear user session
+   */
+  async logout(session: Session) {
+    return new Promise<void>((resolve, reject) => {
+      session.destroy((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
+   * Get current authenticated user
+   */
+  async getCurrentUser(userId: string) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedError('User not found');
+    }
+    return user;
+  }
+
+  /**
+   * Verify session is valid
+   */
+  async verifySession(session: Session) {
+    if (!session.userId) {
+      throw new UnauthorizedError('Not authenticated');
+    }
+
+    const user = await this.userService.findById(session.userId);
+    if (!user) {
+      throw new UnauthorizedError('User not found');
+    }
+
+    return user;
+  }
+} 
