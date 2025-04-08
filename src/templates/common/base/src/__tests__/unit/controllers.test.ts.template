@@ -1,0 +1,417 @@
+import { Request, Response } from 'express';
+import { UserController } from '../../controllers/user.controller';
+import { PostController } from '../../controllers/post.controller';
+import { UserService } from '../../services/user.service';
+import { PostService } from '../../services/post.service';
+import { ValidationError } from '../../errors/validation.error';
+import { NotFoundError } from '../../errors/not-found.error';
+import { AuthenticationError } from '../../errors/authentication.error';
+
+jest.mock('../../services/user.service');
+jest.mock('../../services/post.service');
+
+describe('Controllers', () => {
+  let userController: UserController;
+  let postController: PostController;
+  let mockUserService: jest.Mocked<UserService>;
+  let mockPostService: jest.Mocked<PostService>;
+  let mockRequest: Partial<Request>;
+  let mockResponse: Partial<Response>;
+  let mockNext: jest.Mock;
+
+  beforeEach(() => {
+    mockUserService = new UserService() as jest.Mocked<UserService>;
+    mockPostService = new PostService() as jest.Mocked<PostService>;
+    userController = new UserController(mockUserService);
+    postController = new PostController(mockPostService);
+
+    mockNext = jest.fn();
+    mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+      locals: {}
+    };
+  });
+
+  describe('UserController', () => {
+    describe('register', () => {
+      beforeEach(() => {
+        mockRequest = {
+          body: {
+            email: 'test@example.com',
+            password: 'Password123!',
+            name: 'Test User'
+          }
+        };
+      });
+
+      it('should register a new user and return 201', async () => {
+        const mockUser = {
+          _id: 'user123',
+          email: mockRequest.body.email,
+          name: mockRequest.body.name
+        };
+
+        mockUserService.register.mockResolvedValue(mockUser);
+
+        await userController.register(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(201);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+          success: true,
+          data: mockUser
+        });
+      });
+
+      it('should handle validation errors', async () => {
+        mockUserService.register.mockRejectedValue(
+          new ValidationError('Invalid input')
+        );
+
+        await userController.register(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(ValidationError));
+      });
+
+      it('should validate required fields', async () => {
+        mockRequest.body = {};
+
+        await userController.register(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: expect.stringContaining('required')
+          })
+        );
+      });
+    });
+
+    describe('login', () => {
+      beforeEach(() => {
+        mockRequest = {
+          body: {
+            email: 'test@example.com',
+            password: 'Password123!'
+          }
+        };
+      });
+
+      it('should authenticate user and return token', async () => {
+        const mockAuthResult = {
+          token: 'jwt.token.here',
+          user: {
+            _id: 'user123',
+            email: mockRequest.body.email
+          }
+        };
+
+        mockUserService.authenticate.mockResolvedValue(mockAuthResult);
+
+        await userController.login(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(200);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+          success: true,
+          data: mockAuthResult
+        });
+      });
+
+      it('should handle invalid credentials', async () => {
+        mockUserService.authenticate.mockRejectedValue(
+          new AuthenticationError('Invalid credentials')
+        );
+
+        await userController.login(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(AuthenticationError));
+      });
+    });
+
+    describe('updateProfile', () => {
+      beforeEach(() => {
+        mockRequest = {
+          params: { id: 'user123' },
+          body: {
+            name: 'Updated Name',
+            bio: 'Test bio'
+          },
+          user: { _id: 'user123' }
+        };
+      });
+
+      it('should update user profile', async () => {
+        const mockUpdatedUser = {
+          _id: 'user123',
+          name: mockRequest.body.name,
+          bio: mockRequest.body.bio
+        };
+
+        mockUserService.updateProfile.mockResolvedValue(mockUpdatedUser);
+
+        await userController.updateProfile(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(200);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+          success: true,
+          data: mockUpdatedUser
+        });
+      });
+
+      it('should prevent unauthorized updates', async () => {
+        mockRequest.user = { _id: 'different-user' };
+
+        await userController.updateProfile(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(AuthenticationError));
+      });
+    });
+  });
+
+  describe('PostController', () => {
+    describe('create', () => {
+      beforeEach(() => {
+        mockRequest = {
+          body: {
+            title: 'Test Post',
+            content: 'Test content',
+            tags: ['test']
+          },
+          user: { _id: 'user123' }
+        };
+      });
+
+      it('should create a new post', async () => {
+        const mockPost = {
+          _id: 'post123',
+          ...mockRequest.body,
+          author: mockRequest.user._id
+        };
+
+        mockPostService.create.mockResolvedValue(mockPost);
+
+        await postController.create(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(201);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+          success: true,
+          data: mockPost
+        });
+      });
+
+      it('should handle validation errors', async () => {
+        mockPostService.create.mockRejectedValue(
+          new ValidationError('Invalid input')
+        );
+
+        await postController.create(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(ValidationError));
+      });
+    });
+
+    describe('findWithFilters', () => {
+      beforeEach(() => {
+        mockRequest = {
+          query: {
+            page: '1',
+            limit: '10',
+            tags: ['test'],
+            search: 'query'
+          }
+        };
+      });
+
+      it('should return filtered posts', async () => {
+        const mockResult = {
+          items: [
+            { _id: 'post1', title: 'Test Post 1' },
+            { _id: 'post2', title: 'Test Post 2' }
+          ],
+          total: 2,
+          page: 1,
+          limit: 10,
+          totalPages: 1
+        };
+
+        mockPostService.findWithFilters.mockResolvedValue(mockResult);
+
+        await postController.findWithFilters(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(200);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+          success: true,
+          data: mockResult
+        });
+      });
+
+      it('should handle invalid query parameters', async () => {
+        mockRequest.query = {
+          page: 'invalid',
+          limit: 'invalid'
+        };
+
+        await postController.findWithFilters(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(ValidationError));
+      });
+    });
+
+    describe('update', () => {
+      beforeEach(() => {
+        mockRequest = {
+          params: { id: 'post123' },
+          body: {
+            title: 'Updated Title',
+            content: 'Updated content'
+          },
+          user: { _id: 'user123' }
+        };
+      });
+
+      it('should update post', async () => {
+        const mockUpdatedPost = {
+          _id: 'post123',
+          ...mockRequest.body,
+          author: mockRequest.user._id
+        };
+
+        mockPostService.update.mockResolvedValue(mockUpdatedPost);
+
+        await postController.update(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(200);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+          success: true,
+          data: mockUpdatedPost
+        });
+      });
+
+      it('should handle non-existent post', async () => {
+        mockPostService.update.mockRejectedValue(
+          new NotFoundError('Post not found')
+        );
+
+        await postController.update(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(NotFoundError));
+      });
+
+      it('should prevent unauthorized updates', async () => {
+        mockPostService.update.mockRejectedValue(
+          new AuthenticationError('Unauthorized')
+        );
+
+        await postController.update(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(AuthenticationError));
+      });
+    });
+
+    describe('delete', () => {
+      beforeEach(() => {
+        mockRequest = {
+          params: { id: 'post123' },
+          user: { _id: 'user123' }
+        };
+      });
+
+      it('should delete post', async () => {
+        await postController.delete(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockPostService.delete).toHaveBeenCalledWith(
+          mockRequest.params.id,
+          mockRequest.user._id
+        );
+        expect(mockResponse.status).toHaveBeenCalledWith(204);
+      });
+
+      it('should handle non-existent post', async () => {
+        mockPostService.delete.mockRejectedValue(
+          new NotFoundError('Post not found')
+        );
+
+        await postController.delete(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(NotFoundError));
+      });
+
+      it('should prevent unauthorized deletion', async () => {
+        mockPostService.delete.mockRejectedValue(
+          new AuthenticationError('Unauthorized')
+        );
+
+        await postController.delete(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(expect.any(AuthenticationError));
+      });
+    });
+  });
+}); 

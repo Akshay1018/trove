@@ -1,1 +1,80 @@
 // TODO: Implement template
+
+image: node:20.11.1
+
+definitions:
+  caches:
+    npm: ~/.npm
+  steps:
+    - step: &build-test
+        name: Build and Test
+        caches:
+          - npm
+        script:
+          - npm ci
+          - npm run lint
+          - npm run test
+          - npm run build
+        artifacts:
+          - dist/**
+    - step: &deploy-staging
+        name: Deploy to Staging
+        deployment: staging
+        trigger: manual
+        script:
+          - pipe: atlassian/heroku-deploy:2.1.1
+            variables:
+              HEROKU_API_KEY: $HEROKU_API_KEY
+              HEROKU_APP_NAME: $HEROKU_STAGING_APP
+              ZIP_FILE: "dist.tar.gz"
+    - step: &deploy-production
+        name: Deploy to Production
+        deployment: production
+        trigger: manual
+        script:
+          - pipe: atlassian/heroku-deploy:2.1.1
+            variables:
+              HEROKU_API_KEY: $HEROKU_API_KEY
+              HEROKU_APP_NAME: $HEROKU_PRODUCTION_APP
+              ZIP_FILE: "dist.tar.gz"
+
+pipelines:
+  default:
+    - step: *build-test
+  branches:
+    main:
+      - step: *build-test
+      - step: *deploy-staging
+      - step: *deploy-production
+    develop:
+      - step: *build-test
+      - step: *deploy-staging
+    feature/*:
+      - step: *build-test
+  pull-requests:
+    '**':
+      - step: *build-test
+  tags:
+    'v*':
+      - step: *build-test
+      - step: *deploy-production
+
+  custom:
+    sonar:
+      - step:
+          name: SonarQube Analysis
+          script:
+            - pipe: sonarsource/sonarqube-scan:1.0.0
+              variables:
+                SONAR_HOST_URL: $SONAR_HOST_URL
+                SONAR_TOKEN: $SONAR_TOKEN
+    security:
+      - step:
+          name: Security Scan
+          script:
+            - npm audit
+            - npx snyk test
+            
+options:
+  max-time: 30
+  size: 2x

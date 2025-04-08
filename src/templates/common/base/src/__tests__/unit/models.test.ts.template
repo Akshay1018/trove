@@ -1,0 +1,279 @@
+import { connect, disconnect } from '../../database';
+import { User } from '../../models/user.model';
+import { Post } from '../../models/post.model';
+import { Comment } from '../../models/comment.model';
+
+describe('Database Models', () => {
+  beforeAll(async () => {
+    await connect();
+  });
+
+  afterAll(async () => {
+    await disconnect();
+  });
+
+  afterEach(async () => {
+    await User.deleteMany({});
+    await Post.deleteMany({});
+    await Comment.deleteMany({});
+  });
+
+  describe('User Model', () => {
+    describe('Schema Validation', () => {
+      it('should require email and password', async () => {
+        const user = new User({
+          name: 'Test User'
+        });
+
+        await expect(user.validate()).rejects.toThrow();
+      });
+
+      it('should validate email format', async () => {
+        const user = new User({
+          email: 'invalid-email',
+          password: 'Password123!',
+          name: 'Test User'
+        });
+
+        await expect(user.validate()).rejects.toThrow();
+      });
+
+      it('should hash password before save', async () => {
+        const password = 'Password123!';
+        const user = await User.create({
+          email: 'test@example.com',
+          password,
+          name: 'Test User'
+        });
+
+        expect(user.password).not.toBe(password);
+        expect(user.password).toHaveLength(60); // bcrypt hash length
+      });
+
+      it('should enforce unique email', async () => {
+        await User.create({
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User'
+        });
+
+        await expect(User.create({
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Another User'
+        })).rejects.toThrow();
+      });
+    });
+
+    describe('Instance Methods', () => {
+      it('should compare password correctly', async () => {
+        const user = await User.create({
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User'
+        });
+
+        expect(await user.comparePassword('Password123!')).toBe(true);
+        expect(await user.comparePassword('WrongPassword')).toBe(false);
+      });
+
+      it('should not expose password in toJSON', () => {
+        const user = new User({
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User'
+        });
+
+        const json = user.toJSON();
+        expect(json).not.toHaveProperty('password');
+      });
+    });
+
+    describe('Timestamps', () => {
+      it('should set createdAt and updatedAt', async () => {
+        const user = await User.create({
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User'
+        });
+
+        expect(user.createdAt).toBeInstanceOf(Date);
+        expect(user.updatedAt).toBeInstanceOf(Date);
+      });
+
+      it('should update updatedAt on save', async () => {
+        const user = await User.create({
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User'
+        });
+
+        const originalUpdatedAt = user.updatedAt;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        user.name = 'Updated Name';
+        await user.save();
+
+        expect(user.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
+      });
+    });
+  });
+
+  describe('Post Model', () => {
+    let author: any;
+
+    beforeEach(async () => {
+      author = await User.create({
+        email: 'author@example.com',
+        password: 'Password123!',
+        name: 'Test Author'
+      });
+    });
+
+    describe('Schema Validation', () => {
+      it('should require title and content', async () => {
+        const post = new Post({
+          author: author._id
+        });
+
+        await expect(post.validate()).rejects.toThrow();
+      });
+
+      it('should require valid author reference', async () => {
+        const post = new Post({
+          title: 'Test Post',
+          content: 'Test content',
+          author: 'invalid-id'
+        });
+
+        await expect(post.validate()).rejects.toThrow();
+      });
+
+      it('should enforce title length', async () => {
+        const post = new Post({
+          title: 'a'.repeat(101), // Assuming max length is 100
+          content: 'Test content',
+          author: author._id
+        });
+
+        await expect(post.validate()).rejects.toThrow();
+      });
+    });
+
+    describe('Population', () => {
+      it('should populate author', async () => {
+        const post = await Post.create({
+          title: 'Test Post',
+          content: 'Test content',
+          author: author._id
+        });
+
+        const populatedPost = await Post.findById(post._id).populate('author');
+        expect(populatedPost?.author).toHaveProperty('email', author.email);
+      });
+    });
+
+    describe('Virtuals', () => {
+      it('should calculate excerpt', async () => {
+        const post = new Post({
+          title: 'Test Post',
+          content: 'This is a very long post content that should be truncated in the excerpt',
+          author: author._id
+        });
+
+        expect(post.excerpt).toBe('This is a very long post content that...');
+      });
+    });
+  });
+
+  describe('Comment Model', () => {
+    let author: any;
+    let post: any;
+
+    beforeEach(async () => {
+      author = await User.create({
+        email: 'author@example.com',
+        password: 'Password123!',
+        name: 'Test Author'
+      });
+
+      post = await Post.create({
+        title: 'Test Post',
+        content: 'Test content',
+        author: author._id
+      });
+    });
+
+    describe('Schema Validation', () => {
+      it('should require content', async () => {
+        const comment = new Comment({
+          author: author._id,
+          post: post._id
+        });
+
+        await expect(comment.validate()).rejects.toThrow();
+      });
+
+      it('should require valid post reference', async () => {
+        const comment = new Comment({
+          content: 'Test comment',
+          author: author._id,
+          post: 'invalid-id'
+        });
+
+        await expect(comment.validate()).rejects.toThrow();
+      });
+    });
+
+    describe('Middleware', () => {
+      it('should update post commentCount on save', async () => {
+        await Comment.create({
+          content: 'Test comment',
+          author: author._id,
+          post: post._id
+        });
+
+        const updatedPost = await Post.findById(post._id);
+        expect(updatedPost?.commentCount).toBe(1);
+      });
+
+      it('should update post commentCount on delete', async () => {
+        const comment = await Comment.create({
+          content: 'Test comment',
+          author: author._id,
+          post: post._id
+        });
+
+        await comment.remove();
+
+        const updatedPost = await Post.findById(post._id);
+        expect(updatedPost?.commentCount).toBe(0);
+      });
+    });
+
+    describe('Queries', () => {
+      it('should support pagination', async () => {
+        // Create 5 comments
+        await Promise.all(Array(5).fill(null).map((_, i) =>
+          Comment.create({
+            content: `Comment ${i + 1}`,
+            author: author._id,
+            post: post._id
+          })
+        ));
+
+        const page1 = await Comment.find({ post: post._id })
+          .limit(3)
+          .sort('-createdAt');
+
+        const page2 = await Comment.find({ post: post._id })
+          .skip(3)
+          .limit(3)
+          .sort('-createdAt');
+
+        expect(page1).toHaveLength(3);
+        expect(page2).toHaveLength(2);
+      });
+    });
+  });
+}); 

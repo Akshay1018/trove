@@ -34,7 +34,19 @@ export const BASE_STRUCTURE = {
     src: [
       'src/config/index.ts',
       'src/utils/logger.ts',
+      // Unit tests
+      'src/__tests__/unit/controllers.test.ts.template',
+      'src/__tests__/unit/services.test.ts.template',
+      'src/__tests__/unit/repositories.test.ts.template',
+      'src/__tests__/unit/models.test.ts.template',
+      'src/__tests__/unit/utils.test.ts.template',
+      'src/__tests__/unit/config.test.ts.template',
       'src/__tests__/unit/.gitkeep',
+      // Integration tests
+      'src/__tests__/integration/api.test.ts.template',
+      'src/__tests__/integration/database.test.ts.template',
+      'src/__tests__/integration/auth.test.ts.template',
+      'src/__tests__/integration/health.test.ts.template',
       'src/__tests__/integration/.gitkeep'
     ]
   }

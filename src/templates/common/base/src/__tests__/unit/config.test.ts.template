@@ -1,0 +1,23 @@
+import { config } from '../../config';
+
+describe('Configuration', () => {
+  it('should have required properties', () => {
+    expect(config).toHaveProperty('env');
+    expect(config).toHaveProperty('port');
+    expect(config).toHaveProperty('host');
+    expect(config).toHaveProperty('apiPrefix');
+    expect(config).toHaveProperty('logLevel');
+  });
+
+  it('should have default values when env vars not set', () => {
+    expect(config.env).toBe('development');
+    expect(config.port).toBe(3000);
+    expect(config.host).toBe('localhost');
+    expect(config.apiPrefix).toBe('/api/v1');
+  });
+
+  it('should have valid log level', () => {
+    const validLogLevels = ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'];
+    expect(validLogLevels).toContain(config.logLevel);
+  });
+}); 

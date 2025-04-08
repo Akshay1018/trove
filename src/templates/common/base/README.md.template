@@ -47,14 +47,6 @@ A modern Node.js backend application built with <%= framework %><% if (database 
 - `npm test` - Run tests
 - `npm run test:coverage` - Run tests with coverage report
 
-## API Endpoints
-
-<% if (auth !== 'skip') { %>### Authentication
-
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user (protected)<% } %>
-
 ## Environment Variables
 
 - `PORT` - Server port (default: 3000)
@@ -97,24 +89,4 @@ src/
 ├── __tests__/     # Test files
 ├── app.ts         # Express app setup
 └── index.ts       # App entry point
-```
-
-## Testing
-
-Tests are written using Jest and Supertest. Run tests with:
-
-```bash
-npm test
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
-
-## License
-
-This project is licensed under the MIT License. 
+``` 
