@@ -1,0 +1,383 @@
+import { connect, disconnect } from '../../database';
+import { UserService } from '../../services/user.service';
+import { PostService } from '../../services/post.service';
+import { User } from '../../models/user.model';
+import { Post } from '../../models/post.model';
+import { ValidationError } from '../../errors/validation.error';
+import { NotFoundError } from '../../errors/not-found.error';
+import { AuthenticationError } from '../../errors/authentication.error';
+
+describe('Services', () => {
+  let userService: UserService;
+  let postService: PostService;
+
+  beforeAll(async () => {
+    await connect();
+    userService = new UserService();
+    postService = new PostService();
+  });
+
+  afterAll(async () => {
+    await disconnect();
+  });
+
+  afterEach(async () => {
+    await User.deleteMany({});
+    await Post.deleteMany({});
+  });
+
+  describe('UserService', () => {
+    describe('register', () => {
+      it('should register a new user', async () => {
+        const userData = {
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User'
+        };
+
+        const user = await userService.register(userData);
+
+        expect(user).toHaveProperty('_id');
+        expect(user.email).toBe(userData.email);
+        expect(user.name).toBe(userData.name);
+        expect(user).not.toHaveProperty('password');
+      });
+
+      it('should validate password strength', async () => {
+        const userData = {
+          email: 'test@example.com',
+          password: 'weak',
+          name: 'Test User'
+        };
+
+        await expect(userService.register(userData))
+          .rejects
+          .toThrow(ValidationError);
+      });
+
+      it('should validate email format', async () => {
+        const userData = {
+          email: 'invalid-email',
+          password: 'Password123!',
+          name: 'Test User'
+        };
+
+        await expect(userService.register(userData))
+          .rejects
+          .toThrow(ValidationError);
+      });
+
+      it('should prevent duplicate registration', async () => {
+        const userData = {
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User'
+        };
+
+        await userService.register(userData);
+
+        await expect(userService.register(userData))
+          .rejects
+          .toThrow(ValidationError);
+      });
+    });
+
+    describe('authenticate', () => {
+      const userData = {
+        email: 'test@example.com',
+        password: 'Password123!',
+        name: 'Test User'
+      };
+
+      beforeEach(async () => {
+        await userService.register(userData);
+      });
+
+      it('should authenticate valid credentials', async () => {
+        const { token, user } = await userService.authenticate({
+          email: userData.email,
+          password: userData.password
+        });
+
+        expect(token).toBeDefined();
+        expect(user).toBeDefined();
+        expect(user.email).toBe(userData.email);
+        expect(user).not.toHaveProperty('password');
+      });
+
+      it('should reject invalid password', async () => {
+        await expect(userService.authenticate({
+          email: userData.email,
+          password: 'wrong-password'
+        })).rejects.toThrow(AuthenticationError);
+      });
+
+      it('should reject non-existent user', async () => {
+        await expect(userService.authenticate({
+          email: 'nonexistent@example.com',
+          password: userData.password
+        })).rejects.toThrow(AuthenticationError);
+      });
+    });
+
+    describe('updateProfile', () => {
+      let user: any;
+
+      beforeEach(async () => {
+        user = await userService.register({
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User'
+        });
+      });
+
+      it('should update user profile', async () => {
+        const updates = {
+          name: 'Updated Name',
+          bio: 'Test bio'
+        };
+
+        const updated = await userService.updateProfile(user._id, updates);
+
+        expect(updated.name).toBe(updates.name);
+        expect(updated.bio).toBe(updates.bio);
+        expect(updated.email).toBe(user.email);
+      });
+
+      it('should prevent email updates', async () => {
+        await expect(userService.updateProfile(user._id, {
+          email: 'new@example.com'
+        })).rejects.toThrow(ValidationError);
+      });
+
+      it('should validate bio length', async () => {
+        await expect(userService.updateProfile(user._id, {
+          bio: 'a'.repeat(1001)
+        })).rejects.toThrow(ValidationError);
+      });
+    });
+
+    describe('changePassword', () => {
+      let user: any;
+      const oldPassword = 'Password123!';
+      const newPassword = 'NewPassword123!';
+
+      beforeEach(async () => {
+        user = await userService.register({
+          email: 'test@example.com',
+          password: oldPassword,
+          name: 'Test User'
+        });
+      });
+
+      it('should change password when old password is correct', async () => {
+        await userService.changePassword(user._id, {
+          oldPassword,
+          newPassword
+        });
+
+        const { token } = await userService.authenticate({
+          email: user.email,
+          password: newPassword
+        });
+
+        expect(token).toBeDefined();
+      });
+
+      it('should reject incorrect old password', async () => {
+        await expect(userService.changePassword(user._id, {
+          oldPassword: 'wrong-password',
+          newPassword
+        })).rejects.toThrow(AuthenticationError);
+      });
+
+      it('should validate new password strength', async () => {
+        await expect(userService.changePassword(user._id, {
+          oldPassword,
+          newPassword: 'weak'
+        })).rejects.toThrow(ValidationError);
+      });
+    });
+  });
+
+  describe('PostService', () => {
+    let author: any;
+
+    beforeEach(async () => {
+      author = await userService.register({
+        email: 'author@example.com',
+        password: 'Password123!',
+        name: 'Test Author'
+      });
+    });
+
+    describe('create', () => {
+      it('should create a new post', async () => {
+        const postData = {
+          title: 'Test Post',
+          content: 'Test content',
+          tags: ['test', 'example']
+        };
+
+        const post = await postService.create(author._id, postData);
+
+        expect(post).toHaveProperty('_id');
+        expect(post.title).toBe(postData.title);
+        expect(post.content).toBe(postData.content);
+        expect(post.tags).toEqual(expect.arrayContaining(postData.tags));
+        expect(post.author._id.toString()).toBe(author._id.toString());
+      });
+
+      it('should validate title length', async () => {
+        await expect(postService.create(author._id, {
+          title: 'a'.repeat(101),
+          content: 'Test content'
+        })).rejects.toThrow(ValidationError);
+      });
+
+      it('should validate content length', async () => {
+        await expect(postService.create(author._id, {
+          title: 'Test Post',
+          content: 'a'.repeat(10001)
+        })).rejects.toThrow(ValidationError);
+      });
+
+      it('should sanitize HTML in content', async () => {
+        const post = await postService.create(author._id, {
+          title: 'Test Post',
+          content: '<script>alert("xss")</script><p>Safe content</p>'
+        });
+
+        expect(post.content).toBe('<p>Safe content</p>');
+      });
+    });
+
+    describe('update', () => {
+      let post: any;
+
+      beforeEach(async () => {
+        post = await postService.create(author._id, {
+          title: 'Original Title',
+          content: 'Original content',
+          tags: ['original']
+        });
+      });
+
+      it('should update post fields', async () => {
+        const updates = {
+          title: 'Updated Title',
+          content: 'Updated content',
+          tags: ['updated']
+        };
+
+        const updated = await postService.update(post._id, author._id, updates);
+
+        expect(updated.title).toBe(updates.title);
+        expect(updated.content).toBe(updates.content);
+        expect(updated.tags).toEqual(expect.arrayContaining(updates.tags));
+      });
+
+      it('should prevent updates by non-author', async () => {
+        const otherUser = await userService.register({
+          email: 'other@example.com',
+          password: 'Password123!',
+          name: 'Other User'
+        });
+
+        await expect(postService.update(post._id, otherUser._id, {
+          title: 'Updated Title'
+        })).rejects.toThrow(AuthenticationError);
+      });
+    });
+
+    describe('findWithFilters', () => {
+      beforeEach(async () => {
+        await Promise.all([
+          postService.create(author._id, {
+            title: 'First Post',
+            content: 'First content',
+            tags: ['tag1', 'tag2']
+          }),
+          postService.create(author._id, {
+            title: 'Second Post',
+            content: 'Second content',
+            tags: ['tag2', 'tag3']
+          }),
+          postService.create(author._id, {
+            title: 'Third Post',
+            content: 'Third content',
+            tags: ['tag3', 'tag4']
+          })
+        ]);
+      });
+
+      it('should filter by tag', async () => {
+        const { items, total } = await postService.findWithFilters({
+          tags: ['tag2']
+        });
+
+        expect(total).toBe(2);
+        items.forEach(post => {
+          expect(post.tags).toContain('tag2');
+        });
+      });
+
+      it('should search by title and content', async () => {
+        const { items, total } = await postService.findWithFilters({
+          search: 'First'
+        });
+
+        expect(total).toBe(1);
+        expect(items[0].title).toBe('First Post');
+      });
+
+      it('should sort by views', async () => {
+        await postService.incrementViews(await Post.findOne({ title: 'Second Post' }));
+        await postService.incrementViews(await Post.findOne({ title: 'Second Post' }));
+        await postService.incrementViews(await Post.findOne({ title: 'Third Post' }));
+
+        const { items } = await postService.findWithFilters({
+          sort: { views: -1 }
+        });
+
+        expect(items[0].title).toBe('Second Post');
+        expect(items[1].title).toBe('Third Post');
+      });
+    });
+
+    describe('delete', () => {
+      let post: any;
+
+      beforeEach(async () => {
+        post = await postService.create(author._id, {
+          title: 'Test Post',
+          content: 'Test content'
+        });
+      });
+
+      it('should delete post by author', async () => {
+        await postService.delete(post._id, author._id);
+
+        await expect(Post.findById(post._id)).resolves.toBeNull();
+      });
+
+      it('should prevent deletion by non-author', async () => {
+        const otherUser = await userService.register({
+          email: 'other@example.com',
+          password: 'Password123!',
+          name: 'Other User'
+        });
+
+        await expect(postService.delete(post._id, otherUser._id))
+          .rejects
+          .toThrow(AuthenticationError);
+      });
+
+      it('should throw on non-existent post', async () => {
+        await expect(postService.delete('507f1f77bcf86cd799439011', author._id))
+          .rejects
+          .toThrow(NotFoundError);
+      });
+    });
+  });
+}); 

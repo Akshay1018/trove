@@ -1,0 +1,333 @@
+import request from 'supertest';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import mongoose from 'mongoose';
+import { app } from '../../app';
+import { User } from '../../models/user.model';
+import { Post } from '../../models/post.model';
+import { generateJWT } from '../../utils/jwt';
+
+describe('API Integration Tests', () => {
+  let mongoServer: MongoMemoryServer;
+  let authToken: string;
+  let userId: string;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    const mongoUri = mongoServer.getUri();
+    await mongoose.connect(mongoUri);
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  beforeEach(async () => {
+    await User.deleteMany({});
+    await Post.deleteMany({});
+  });
+
+  describe('Authentication Flow', () => {
+    const userData = {
+      email: 'test@example.com',
+      password: 'Password123!',
+      name: 'Test User'
+    };
+
+    it('should register a new user', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(201);
+
+      expect(response.body.data).toHaveProperty('_id');
+      expect(response.body.data.email).toBe(userData.email);
+      expect(response.body.data.name).toBe(userData.name);
+      expect(response.body.data).not.toHaveProperty('password');
+    });
+
+    it('should prevent duplicate email registration', async () => {
+      await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(201);
+
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(400);
+
+      expect(response.body.message).toContain('email already exists');
+    });
+
+    it('should login user and return token', async () => {
+      await request(app)
+        .post('/api/auth/register')
+        .send(userData);
+
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: userData.password
+        })
+        .expect(200);
+
+      expect(response.body.data).toHaveProperty('token');
+      expect(response.body.data).toHaveProperty('user');
+      expect(response.body.data.user.email).toBe(userData.email);
+
+      authToken = response.body.data.token;
+      userId = response.body.data.user._id;
+    });
+
+    it('should reject invalid credentials', async () => {
+      await request(app)
+        .post('/api/auth/register')
+        .send(userData);
+
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: userData.email,
+          password: 'wrongpassword'
+        })
+        .expect(401);
+
+      expect(response.body.message).toContain('Invalid credentials');
+    });
+  });
+
+  describe('User Profile', () => {
+    beforeEach(async () => {
+      const user = await User.create({
+        email: 'test@example.com',
+        password: 'Password123!',
+        name: 'Test User'
+      });
+      userId = user._id.toString();
+      authToken = generateJWT({ userId });
+    });
+
+    it('should get user profile', async () => {
+      const response = await request(app)
+        .get(`/api/users/${userId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body.data).toHaveProperty('_id', userId);
+      expect(response.body.data).toHaveProperty('email', 'test@example.com');
+      expect(response.body.data).not.toHaveProperty('password');
+    });
+
+    it('should update user profile', async () => {
+      const updates = {
+        name: 'Updated Name',
+        bio: 'Test bio'
+      };
+
+      const response = await request(app)
+        .patch(`/api/users/${userId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(updates)
+        .expect(200);
+
+      expect(response.body.data.name).toBe(updates.name);
+      expect(response.body.data.bio).toBe(updates.bio);
+    });
+
+    it('should prevent unauthorized profile updates', async () => {
+      const otherUser = await User.create({
+        email: 'other@example.com',
+        password: 'Password123!',
+        name: 'Other User'
+      });
+
+      await request(app)
+        .patch(`/api/users/${otherUser._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ name: 'Hacked Name' })
+        .expect(403);
+    });
+  });
+
+  describe('Posts Management', () => {
+    beforeEach(async () => {
+      const user = await User.create({
+        email: 'test@example.com',
+        password: 'Password123!',
+        name: 'Test User'
+      });
+      userId = user._id.toString();
+      authToken = generateJWT({ userId });
+    });
+
+    it('should create a new post', async () => {
+      const postData = {
+        title: 'Test Post',
+        content: 'Test content',
+        tags: ['test']
+      };
+
+      const response = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(postData)
+        .expect(201);
+
+      expect(response.body.data).toMatchObject({
+        title: postData.title,
+        content: postData.content,
+        tags: postData.tags,
+        author: userId
+      });
+    });
+
+    it('should get posts with pagination', async () => {
+      const posts = Array.from({ length: 15 }, (_, i) => ({
+        title: `Post ${i + 1}`,
+        content: `Content ${i + 1}`,
+        author: userId
+      }));
+
+      await Post.insertMany(posts);
+
+      const response = await request(app)
+        .get('/api/posts')
+        .query({ page: 1, limit: 10 })
+        .expect(200);
+
+      expect(response.body.data.items).toHaveLength(10);
+      expect(response.body.data.total).toBe(15);
+      expect(response.body.data.page).toBe(1);
+      expect(response.body.data.totalPages).toBe(2);
+    });
+
+    it('should filter posts by tags', async () => {
+      await Post.create([
+        {
+          title: 'Tech Post',
+          content: 'Tech content',
+          tags: ['tech'],
+          author: userId
+        },
+        {
+          title: 'Food Post',
+          content: 'Food content',
+          tags: ['food'],
+          author: userId
+        }
+      ]);
+
+      const response = await request(app)
+        .get('/api/posts')
+        .query({ tags: ['tech'] })
+        .expect(200);
+
+      expect(response.body.data.items).toHaveLength(1);
+      expect(response.body.data.items[0].title).toBe('Tech Post');
+    });
+
+    it('should search posts by title and content', async () => {
+      await Post.create([
+        {
+          title: 'Tech Review',
+          content: 'Latest gadgets',
+          author: userId
+        },
+        {
+          title: 'Food Recipe',
+          content: 'Delicious meal',
+          author: userId
+        }
+      ]);
+
+      const response = await request(app)
+        .get('/api/posts')
+        .query({ search: 'tech' })
+        .expect(200);
+
+      expect(response.body.data.items).toHaveLength(1);
+      expect(response.body.data.items[0].title).toBe('Tech Review');
+    });
+
+    it('should update post', async () => {
+      const post = await Post.create({
+        title: 'Original Title',
+        content: 'Original content',
+        author: userId
+      });
+
+      const updates = {
+        title: 'Updated Title',
+        content: 'Updated content'
+      };
+
+      const response = await request(app)
+        .patch(`/api/posts/${post._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(updates)
+        .expect(200);
+
+      expect(response.body.data).toMatchObject(updates);
+    });
+
+    it('should prevent unauthorized post updates', async () => {
+      const otherUser = await User.create({
+        email: 'other@example.com',
+        password: 'Password123!',
+        name: 'Other User'
+      });
+
+      const post = await Post.create({
+        title: 'Original Title',
+        content: 'Original content',
+        author: otherUser._id
+      });
+
+      await request(app)
+        .patch(`/api/posts/${post._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ title: 'Hacked Title' })
+        .expect(403);
+    });
+
+    it('should delete post', async () => {
+      const post = await Post.create({
+        title: 'Test Post',
+        content: 'Test content',
+        author: userId
+      });
+
+      await request(app)
+        .delete(`/api/posts/${post._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(204);
+
+      const deletedPost = await Post.findById(post._id);
+      expect(deletedPost).toBeNull();
+    });
+
+    it('should prevent unauthorized post deletion', async () => {
+      const otherUser = await User.create({
+        email: 'other@example.com',
+        password: 'Password123!',
+        name: 'Other User'
+      });
+
+      const post = await Post.create({
+        title: 'Test Post',
+        content: 'Test content',
+        author: otherUser._id
+      });
+
+      await request(app)
+        .delete(`/api/posts/${post._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(403);
+
+      const existingPost = await Post.findById(post._id);
+      expect(existingPost).toBeTruthy();
+    });
+  });
+}); 

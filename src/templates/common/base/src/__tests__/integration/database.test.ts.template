@@ -1,0 +1,194 @@
+import { connect, disconnect } from '../../database';
+import { User } from '../../models/user.model';
+import { config } from '../../config';
+
+describe('Database Connection', () => {
+  beforeAll(async () => {
+    await connect();
+  });
+
+  afterAll(async () => {
+    await User.deleteMany({});
+    await disconnect();
+  });
+
+  describe('Connection Management', () => {
+    it('should connect to the database successfully', async () => {
+      const isConnected = await connect();
+      expect(isConnected).toBe(true);
+    });
+
+    it('should handle connection errors gracefully', async () => {
+      // Save original URL
+      const originalUrl = config.database.url;
+      
+      // Set invalid URL
+      config.database.url = 'invalid-url';
+      
+      try {
+        await connect();
+        fail('Should have thrown an error');
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+
+      // Restore original URL
+      config.database.url = originalUrl;
+    });
+
+    it('should handle disconnection', async () => {
+      const isDisconnected = await disconnect();
+      expect(isDisconnected).toBe(true);
+    });
+  });
+
+  describe('Database Operations', () => {
+    const testUser = {
+      email: 'db.test@example.com',
+      password: 'Test123!',
+      name: 'DB Test User'
+    };
+
+    it('should create documents successfully', async () => {
+      const user = new User(testUser);
+      const savedUser = await user.save();
+
+      expect(savedUser.id).toBeDefined();
+      expect(savedUser.email).toBe(testUser.email);
+      expect(savedUser.name).toBe(testUser.name);
+      expect(savedUser.password).not.toBe(testUser.password); // Should be hashed
+    });
+
+    it('should read documents successfully', async () => {
+      const user = await User.findOne({ email: testUser.email });
+      
+      expect(user).toBeDefined();
+      expect(user?.email).toBe(testUser.email);
+      expect(user?.name).toBe(testUser.name);
+    });
+
+    it('should update documents successfully', async () => {
+      const updateResult = await User.updateOne(
+        { email: testUser.email },
+        { name: 'Updated Name' }
+      );
+
+      expect(updateResult.modifiedCount).toBe(1);
+
+      const updatedUser = await User.findOne({ email: testUser.email });
+      expect(updatedUser?.name).toBe('Updated Name');
+    });
+
+    it('should delete documents successfully', async () => {
+      const deleteResult = await User.deleteOne({ email: testUser.email });
+      expect(deleteResult.deletedCount).toBe(1);
+
+      const deletedUser = await User.findOne({ email: testUser.email });
+      expect(deletedUser).toBeNull();
+    });
+  });
+
+  describe('Data Validation', () => {
+    it('should enforce required fields', async () => {
+      const invalidUser = new User({
+        // Missing required fields
+      });
+
+      try {
+        await invalidUser.save();
+        fail('Should have thrown a validation error');
+      } catch (error: any) {
+        expect(error.name).toBe('ValidationError');
+        expect(error.errors.email).toBeDefined();
+        expect(error.errors.password).toBeDefined();
+      }
+    });
+
+    it('should validate email format', async () => {
+      const userWithInvalidEmail = new User({
+        email: 'invalid-email',
+        password: 'Test123!',
+        name: 'Test User'
+      });
+
+      try {
+        await userWithInvalidEmail.save();
+        fail('Should have thrown a validation error');
+      } catch (error: any) {
+        expect(error.name).toBe('ValidationError');
+        expect(error.errors.email).toBeDefined();
+      }
+    });
+
+    it('should enforce unique constraints', async () => {
+      const user1 = new User({
+        email: 'unique.test@example.com',
+        password: 'Test123!',
+        name: 'Test User 1'
+      });
+
+      await user1.save();
+
+      const user2 = new User({
+        email: 'unique.test@example.com', // Same email
+        password: 'Test123!',
+        name: 'Test User 2'
+      });
+
+      try {
+        await user2.save();
+        fail('Should have thrown a duplicate key error');
+      } catch (error: any) {
+        expect(error.code).toBe(11000); // MongoDB duplicate key error code
+      }
+
+      // Clean up
+      await User.deleteOne({ email: 'unique.test@example.com' });
+    });
+  });
+
+  describe('Performance', () => {
+    it('should handle bulk operations efficiently', async () => {
+      const users = Array.from({ length: 100 }, (_, i) => ({
+        email: `bulk.test${i}@example.com`,
+        password: 'Test123!',
+        name: `Bulk Test User ${i}`
+      }));
+
+      const startTime = Date.now();
+      await User.insertMany(users);
+      const endTime = Date.now();
+
+      const insertionTime = endTime - startTime;
+      expect(insertionTime).toBeLessThan(5000); // Should complete within 5 seconds
+
+      const count = await User.countDocuments({
+        email: /^bulk\.test.*@example\.com$/
+      });
+      expect(count).toBe(100);
+
+      // Clean up
+      await User.deleteMany({
+        email: /^bulk\.test.*@example\.com$/
+      });
+    });
+
+    it('should handle concurrent operations', async () => {
+      const operations = Array.from({ length: 10 }, (_, i) => {
+        return User.create({
+          email: `concurrent.test${i}@example.com`,
+          password: 'Test123!',
+          name: `Concurrent Test User ${i}`
+        });
+      });
+
+      const results = await Promise.all(operations);
+      expect(results).toHaveLength(10);
+
+      // Clean up
+      await User.deleteMany({
+        email: /^concurrent\.test.*@example\.com$/
+      });
+    });
+  });
+}); 

@@ -1,0 +1,24 @@
+import request from 'supertest';
+import { app } from '../../app';
+import { config } from '../../config';
+
+describe('Health Check Endpoint', () => {
+  it('should return 200 OK with health check info', async () => {
+    const response = await request(app)
+      .get('/api/v1/health')
+      .expect(200);
+
+    expect(response.body).toHaveProperty('status', 'ok');
+    expect(response.body).toHaveProperty('timestamp');
+    expect(response.body).toHaveProperty('uptime');
+    expect(response.body).toHaveProperty('version');
+  });
+
+  it('should include environment in response', async () => {
+    const response = await request(app)
+      .get('/api/v1/health')
+      .expect(200);
+
+    expect(response.body).toHaveProperty('environment', config.env);
+  });
+}); 

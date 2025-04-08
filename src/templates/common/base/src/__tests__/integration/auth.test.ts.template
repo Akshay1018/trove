@@ -1,0 +1,107 @@
+import request from 'supertest';
+import { app } from '../../app';
+import { connect, disconnect } from '../../database';
+import { User } from '../../models/user.model';
+
+describe('Authentication', () => {
+  beforeAll(async () => {
+    await connect();
+  });
+
+  afterAll(async () => {
+    await User.deleteMany({});
+    await disconnect();
+  });
+
+  const testUser = {
+    email: 'test@example.com',
+    password: 'Test123!',
+    name: 'Test User'
+  };
+
+  describe('Registration', () => {
+    it('should register a new user successfully', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(testUser);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty('token');
+      expect(response.body.user).toHaveProperty('email', testUser.email);
+      expect(response.body.user).not.toHaveProperty('password');
+    });
+
+    it('should not register user with existing email', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(testUser);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
+    });
+  });
+
+  describe('Login', () => {
+    it('should login successfully with correct credentials', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: testUser.email,
+          password: testUser.password
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('token');
+      expect(response.body.user).toHaveProperty('email', testUser.email);
+    });
+
+    it('should not login with incorrect password', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: testUser.email,
+          password: 'wrongpassword'
+        });
+
+      expect(response.status).toBe(401);
+      expect(response.body).toHaveProperty('error');
+    });
+  });
+
+  describe('Protected Routes', () => {
+    let authToken: string;
+
+    beforeAll(async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: testUser.email,
+          password: testUser.password
+        });
+      authToken = response.body.token;
+    });
+
+    it('should access protected route with valid token', async () => {
+      const response = await request(app)
+        .get('/api/protected')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should not access protected route without token', async () => {
+      const response = await request(app)
+        .get('/api/protected');
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should not access protected route with invalid token', async () => {
+      const response = await request(app)
+        .get('/api/protected')
+        .set('Authorization', 'Bearer invalid-token');
+
+      expect(response.status).toBe(401);
+    });
+  });
+}); 
