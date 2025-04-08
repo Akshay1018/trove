@@ -1,72 +1,47 @@
 import { Request, Response, NextFunction } from 'express';
-import session from 'express-session';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import { User } from '../models/user.model';
 import bcrypt from 'bcryptjs';
-import { SessionData } from 'express-session';
-import { UnauthorizedError } from '../utils/errors';
+import { UnauthorizedError, BadRequestError } from '../utils/errors';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 
 const authService = new AuthService(new UserService());
 
-// Configure session middleware
-export const sessionMiddleware = session({
-  secret: config.session.secret,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: config.env === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
-  name: 'sessionId',
-});
-
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
 
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
+    const user = await authService.login(email, password, req.session);
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-
-    // Set user session
-    req.session.userId = user.id;
-    req.session.email = user.email;
+    // Set additional session data
+    req.session.createdAt = Date.now();
+    req.session.lastActive = Date.now();
 
     logger.info(`User logged in: ${user.email}`);
-    res.json({ message: 'Login successful' });
+    res.json({ 
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name
+      }
+    });
   } catch (error) {
-    logger.error('Login error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    next(error);
   }
 };
 
-export const logout = (req: Request, res: Response) => {
-  req.session.destroy((err) => {
-    if (err) {
-      logger.error('Logout error:', err);
-      return res.status(500).json({ message: 'Error logging out' });
-    }
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await authService.logout(req.session);
     res.clearCookie('sessionId');
     res.json({ message: 'Logged out successfully' });
-  });
+  } catch (error) {
+    next(error);
+  }
 };
-
-interface CustomSessionData extends SessionData {
-  userId?: string;
-  email?: string;
-}
 
 /**
  * Middleware to check if user is authenticated
