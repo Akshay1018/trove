@@ -427,12 +427,109 @@ npm run dev
 
 ## 🗺️ Roadmap
 
-- [ ] Additional framework support
-- [ ] GraphQL integration
-- [ ] Microservices templates
-- [ ] Kubernetes deployment configurations
-- [ ] Plugin system
-- [ ] Custom template support
+### Framework Support
+- [x] Express.js
+- [x] NestJS (basic)
+- [ ] Fastify
+- [ ] Koa
+- [ ] Hapi
+- [ ] Advanced NestJS features
+
+### Database Support
+- [x] MongoDB
+- [x] PostgreSQL (basic)
+- [x] MySQL (basic)
+- [ ] Advanced PostgreSQL features
+- [ ] Advanced MySQL features
+- [ ] Redis
+- [ ] SQLite
+- [ ] Database migration tools
+- [ ] Connection pooling optimization
+
+### Security Enhancements
+- [ ] Advanced Rate Limiting
+  - IP-based rate limiting
+  - Custom rate limit rules
+  - Redis-backed rate limiting
+- [ ] Authentication Improvements
+  - Two-factor authentication (2FA)
+  - OAuth 2.0 social login providers
+  - Hardware security key support
+  - Passwordless authentication
+- [ ] Security Headers & Policies
+  - Advanced Helmet configuration
+  - Content Security Policy (CSP)
+  - CORS policy templates
+  - HTTP security headers
+- [ ] API Security
+  - API key authentication
+  - JWT refresh token rotation
+  - Request payload validation
+  - Input sanitization
+- [ ] Monitoring & Protection
+  - Brute force protection
+  - SQL injection prevention
+  - XSS protection
+  - CSRF protection
+  - Security audit tools
+
+### Developer Experience
+- [ ] Enhanced CLI Features
+  - Interactive project visualization
+  - Custom template support
+  - Plugin system
+  - Template hot reload
+- [ ] Documentation
+  - Swagger/OpenAPI integration
+  - Automated API documentation
+  - JSDoc generation
+  - Markdown documentation
+- [ ] Development Tools
+  - VS Code extensions
+  - Development containers
+  - Hot reload improvements
+  - Debug configurations
+
+### Testing & Quality
+- [ ] Testing Frameworks
+  - E2E testing templates
+  - Load testing setup
+  - Security testing
+  - Integration testing
+- [ ] Code Quality
+  - Stricter TypeScript configs
+  - Advanced ESLint rules
+  - Code coverage requirements
+  - Performance benchmarks
+
+### Monitoring & Observability
+- [ ] Logging & Monitoring
+  - Structured logging
+  - Log aggregation
+  - Prometheus metrics
+  - Grafana dashboards
+- [ ] Tracing & Debugging
+  - OpenTelemetry integration
+  - Distributed tracing
+  - Performance profiling
+  - Error tracking
+
+### DevOps & Deployment
+- [ ] Container Support
+  - Multi-stage Dockerfiles
+  - Docker Compose templates
+  - Kubernetes manifests
+  - Container optimization
+- [ ] Cloud Integration
+  - AWS deployment templates
+  - Azure deployment guides
+  - GCP configuration
+  - Serverless support
+- [ ] CI/CD Improvements
+  - Advanced pipeline templates
+  - Multi-environment support
+  - Automated releases
+  - Infrastructure as Code
 
 ## ⭐ Show Your Support
 

@@ -1,1 +1,148 @@
-// TODO: Implement template
+import { Request, Response, NextFunction } from 'express';
+import { User } from '../models/user.model';
+import { UserService } from '../services/user.service';
+import { logger } from '../utils/logger';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
+import { validatePassword } from '../utils/auth';
+import { SessionData } from 'express-session';
+
+interface CustomSessionData extends SessionData {
+  userId?: string;
+  email?: string;
+}
+
+export class AuthController {
+  constructor(private userService: UserService) {}
+
+  /**
+   * Register a new user
+   */
+  public register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { email, password, name } = req.body;
+
+      if (!email || !password) {
+        throw new BadRequestError('Email and password are required');
+      }
+
+      const existingUser = await this.userService.findByEmail(email);
+      if (existingUser) {
+        throw new BadRequestError('User already exists');
+      }
+
+      const user = await this.userService.create({
+        email,
+        password,
+        name,
+      });
+
+      // Start session
+      (req.session as CustomSessionData).userId = user._id.toString();
+      (req.session as CustomSessionData).email = user.email;
+
+      res.status(201).json({
+        success: true,
+        data: {
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+          },
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Login user
+   */
+  public login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        throw new BadRequestError('Email and password are required');
+      }
+
+      const user = await this.userService.findByEmail(email);
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+
+      const isPasswordValid = await validatePassword(password, user.password);
+      if (!isPasswordValid) {
+        throw new UnauthorizedError('Invalid credentials');
+      }
+
+      // Start session
+      (req.session as CustomSessionData).userId = user._id.toString();
+      (req.session as CustomSessionData).email = user.email;
+
+      res.status(200).json({
+        success: true,
+        data: {
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+          },
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Logout user
+   */
+  public logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      req.session.destroy((err) => {
+        if (err) {
+          logger.error('Error destroying session:', err);
+          throw new Error('Could not log out');
+        }
+        res.clearCookie('connect.sid');
+        res.status(200).json({
+          success: true,
+          message: 'Logged out successfully',
+        });
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Get current session user
+   */
+  public getCurrentUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = (req.session as CustomSessionData).userId;
+      if (!userId) {
+        throw new UnauthorizedError('Not authenticated');
+      }
+
+      const user = await this.userService.findById(userId);
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+          },
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+}

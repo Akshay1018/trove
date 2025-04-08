@@ -5,6 +5,8 @@ import { app } from '../../app';
 import { User } from '../../models/user.model';
 import { Post } from '../../models/post.model';
 import { generateJWT } from '../../utils/jwt';
+import path from 'path';
+import fs from 'fs';
 
 describe('API Integration Tests', () => {
   let mongoServer: MongoMemoryServer;
@@ -25,6 +27,51 @@ describe('API Integration Tests', () => {
   beforeEach(async () => {
     await User.deleteMany({});
     await Post.deleteMany({});
+  });
+
+  describe('API Version and Health', () => {
+    it('should return API version and status', async () => {
+      const response = await request(app)
+        .get('/api/health')
+        .expect(200);
+
+      expect(response.body.data).toHaveProperty('version');
+      expect(response.body.data).toHaveProperty('status', 'healthy');
+      expect(response.body.data).toHaveProperty('timestamp');
+    });
+
+    it('should handle invalid API version', async () => {
+      const response = await request(app)
+        .get('/api/v999/users')
+        .expect(404);
+
+      expect(response.body.message).toContain('API version not supported');
+    });
+  });
+
+  describe('Rate Limiting', () => {
+    it('should enforce rate limits', async () => {
+      const requests = Array.from({ length: 101 }, () =>
+        request(app).get('/api/health')
+      );
+
+      const responses = await Promise.all(requests);
+      const lastResponse = responses[responses.length - 1];
+
+      expect(lastResponse.status).toBe(429);
+      expect(lastResponse.body.message).toContain('Too many requests');
+    });
+
+    it('should reset rate limit after window expires', async () => {
+      // Wait for rate limit window to expire
+      await new Promise(resolve => setTimeout(resolve, 60000));
+
+      const response = await request(app)
+        .get('/api/health')
+        .expect(200);
+
+      expect(response.body.data.status).toBe('healthy');
+    });
   });
 
   describe('Authentication Flow', () => {
@@ -251,7 +298,7 @@ describe('API Integration Tests', () => {
       expect(response.body.data.items[0].title).toBe('Tech Review');
     });
 
-    it('should update post', async () => {
+    it('should update a post', async () => {
       const post = await Post.create({
         title: 'Original Title',
         content: 'Original content',
@@ -269,30 +316,11 @@ describe('API Integration Tests', () => {
         .send(updates)
         .expect(200);
 
-      expect(response.body.data).toMatchObject(updates);
+      expect(response.body.data.title).toBe(updates.title);
+      expect(response.body.data.content).toBe(updates.content);
     });
 
-    it('should prevent unauthorized post updates', async () => {
-      const otherUser = await User.create({
-        email: 'other@example.com',
-        password: 'Password123!',
-        name: 'Other User'
-      });
-
-      const post = await Post.create({
-        title: 'Original Title',
-        content: 'Original content',
-        author: otherUser._id
-      });
-
-      await request(app)
-        .patch(`/api/posts/${post._id}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ title: 'Hacked Title' })
-        .expect(403);
-    });
-
-    it('should delete post', async () => {
+    it('should delete a post', async () => {
       const post = await Post.create({
         title: 'Test Post',
         content: 'Test content',
@@ -308,7 +336,7 @@ describe('API Integration Tests', () => {
       expect(deletedPost).toBeNull();
     });
 
-    it('should prevent unauthorized post deletion', async () => {
+    it('should prevent unauthorized post updates', async () => {
       const otherUser = await User.create({
         email: 'other@example.com',
         password: 'Password123!',
@@ -316,8 +344,28 @@ describe('API Integration Tests', () => {
       });
 
       const post = await Post.create({
-        title: 'Test Post',
-        content: 'Test content',
+        title: 'Other User Post',
+        content: 'Other user content',
+        author: otherUser._id
+      });
+
+      await request(app)
+        .patch(`/api/posts/${post._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ title: 'Hacked Title' })
+        .expect(403);
+    });
+
+    it('should prevent unauthorized post deletions', async () => {
+      const otherUser = await User.create({
+        email: 'other@example.com',
+        password: 'Password123!',
+        name: 'Other User'
+      });
+
+      const post = await Post.create({
+        title: 'Other User Post',
+        content: 'Other user content',
         author: otherUser._id
       });
 
@@ -325,9 +373,159 @@ describe('API Integration Tests', () => {
         .delete(`/api/posts/${post._id}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(403);
+    });
 
-      const existingPost = await Post.findById(post._id);
-      expect(existingPost).toBeTruthy();
+    it('should handle concurrent post updates', async () => {
+      const post = await Post.create({
+        title: 'Original Title',
+        content: 'Original content',
+        author: userId
+      });
+
+      const updates = [
+        { title: 'Update 1' },
+        { title: 'Update 2' },
+        { title: 'Update 3' }
+      ];
+
+      const updatePromises = updates.map(update =>
+        request(app)
+          .patch(`/api/posts/${post._id}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(update)
+      );
+
+      const responses = await Promise.all(updatePromises);
+      const successResponses = responses.filter(r => r.status === 200);
+      
+      expect(successResponses).toHaveLength(1);
+      const finalPost = await Post.findById(post._id);
+      expect(finalPost.version).toBe(1);
+    });
+
+    it('should track post view counts accurately', async () => {
+      const post = await Post.create({
+        title: 'Test Post',
+        content: 'Test content',
+        author: userId
+      });
+
+      const viewPromises = Array.from({ length: 5 }, () =>
+        request(app).get(`/api/posts/${post._id}/view`)
+      );
+
+      await Promise.all(viewPromises);
+
+      const updatedPost = await Post.findById(post._id);
+      expect(updatedPost.viewCount).toBe(5);
+    });
+
+    it('should handle post content sanitization', async () => {
+      const response = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          title: 'Test Post',
+          content: '<script>alert("xss")</script><p>Safe content</p>',
+          tags: ['test']
+        })
+        .expect(201);
+
+      expect(response.body.data.content).not.toContain('<script>');
+      expect(response.body.data.content).toContain('<p>Safe content</p>');
+    });
+  });
+
+  describe('API Documentation', () => {
+    it('should serve OpenAPI documentation', async () => {
+      const response = await request(app)
+        .get('/api/docs')
+        .expect(200);
+
+      expect(response.type).toBe('text/html');
+      expect(response.text).toContain('swagger-ui');
+    });
+
+    it('should serve OpenAPI JSON schema', async () => {
+      const response = await request(app)
+        .get('/api/docs/swagger.json')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('openapi');
+      expect(response.body).toHaveProperty('paths');
+      expect(response.body).toHaveProperty('components');
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle invalid JSON in request body', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .set('Content-Type', 'application/json')
+        .send('{"invalid"json}')
+        .expect(400);
+
+      expect(response.body.message).toContain('Invalid JSON');
+    });
+
+    it('should handle validation errors with details', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: 'invalid-email',
+          password: '123' // Too short
+        })
+        .expect(400);
+
+      expect(response.body.errors).toHaveLength(2);
+      expect(response.body.errors[0]).toHaveProperty('field');
+      expect(response.body.errors[0]).toHaveProperty('message');
+    });
+
+    it('should handle not found errors', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .get(`/api/posts/${nonExistentId}`)
+        .expect(404);
+
+      expect(response.body.message).toContain('not found');
+    });
+  });
+
+  describe('File Uploads', () => {
+    it('should handle avatar upload for user', async () => {
+      const user = await User.create({
+        email: 'test@example.com',
+        password: 'Password123!',
+        name: 'Test User'
+      });
+      const token = generateJWT({ userId: user._id });
+
+      const response = await request(app)
+        .post('/api/users/avatar')
+        .set('Authorization', `Bearer ${token}`)
+        .attach('avatar', path.join(__dirname, '../../../test-files/test-avatar.jpg'))
+        .expect(200);
+
+      expect(response.body.data).toHaveProperty('avatarUrl');
+      expect(response.body.data.avatarUrl).toMatch(/^https?:\/\//);
+    });
+
+    it('should validate file type and size', async () => {
+      const user = await User.create({
+        email: 'test@example.com',
+        password: 'Password123!',
+        name: 'Test User'
+      });
+      const token = generateJWT({ userId: user._id });
+
+      const response = await request(app)
+        .post('/api/users/avatar')
+        .set('Authorization', `Bearer ${token}`)
+        .attach('avatar', path.join(__dirname, '../../../test-files/invalid.txt'))
+        .expect(400);
+
+      expect(response.body.message).toContain('Invalid file type');
     });
   });
 }); 

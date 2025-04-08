@@ -2,11 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import { config } from '../config';
+import { logger } from '../utils/logger';
 
 declare module 'express-session' {
   interface SessionData {
     userId: string;
-    isAuthenticated: boolean;
+    email: string;
+    createdAt: number;
+    lastActive: number;
   }
 }
 
@@ -18,16 +21,70 @@ export const sessionMiddleware = session({
     mongoUrl: config.databaseUrl,
     collectionName: 'sessions',
     ttl: 24 * 60 * 60, // 1 day
+    crypto: {
+      secret: config.sessionSecret
+    },
+    autoRemove: 'native',
+    touchAfter: 24 * 3600 // Only update session once per day
   }),
+  name: 'sessionId', // Custom cookie name
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 1 day
+    sameSite: 'strict',
+    path: '/',
+    domain: process.env.NODE_ENV === 'production' ? config.domain : undefined
   },
+  rolling: true // Reset maxAge on every response
 });
 
+// Middleware to track session activity
+export const sessionActivity = (req: Request, res: Response, next: NextFunction) => {
+  if (req.session) {
+    if (!req.session.createdAt) {
+      req.session.createdAt = Date.now();
+    }
+    req.session.lastActive = Date.now();
+  }
+  next();
+};
+
+// Middleware to check session age and validity
+export const validateSession = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.session?.userId) {
+    return next();
+  }
+
+  const now = Date.now();
+  const maxSessionAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+  // Check if session is too old
+  if (now - req.session.createdAt > maxSessionAge) {
+    return req.session.destroy((err) => {
+      if (err) {
+        logger.error('Error destroying expired session:', err);
+      }
+      res.status(401).json({ message: 'Session expired' });
+    });
+  }
+
+  // Check for session inactivity
+  const inactivityTimeout = 2 * 60 * 60 * 1000; // 2 hours
+  if (now - req.session.lastActive > inactivityTimeout) {
+    return req.session.destroy((err) => {
+      if (err) {
+        logger.error('Error destroying inactive session:', err);
+      }
+      res.status(401).json({ message: 'Session expired due to inactivity' });
+    });
+  }
+
+  next();
+};
+
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-  if (req.session.isAuthenticated) {
+  if (req.session?.userId) {
     next();
   } else {
     res.status(401).json({ message: 'Unauthorized' });

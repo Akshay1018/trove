@@ -1,22 +1,27 @@
 {
   "name": "session",
   "description": "Session-based authentication template",
-  "files": [
-    {
-      "source": "src/config/session.ts",
-      "target": "src/config/session.ts"
-    },
-    {
-      "source": "src/middleware/auth.middleware.ts",
-      "target": "src/middleware/auth.middleware.ts"
-    },
-    {
-      "source": "src/controllers/auth.controller.ts",
-      "target": "src/controllers/auth.controller.ts"
-    },
-    {
-      "source": "src/routes/auth.routes.ts",
-      "target": "src/routes/auth.routes.ts"
-    }
-  ]
+  "files": {
+    "src/config/session.config.ts": "config/session.config.ts.template",
+    "src/middleware/auth.middleware.ts": "middleware/auth.middleware.ts.template",
+    "src/middleware/validation.middleware.ts": "middleware/validation.middleware.ts.template",
+    "src/controllers/auth.controller.ts": "controllers/auth.controller.ts.template",
+    "src/routes/auth.routes.ts": "routes/auth.routes.ts.template",
+    "src/services/auth.service.ts": "services/auth.service.ts.template",
+    "src/types/express/index.d.ts": "types/express.d.ts.template"
+  },
+  "dependencies": {
+    "express-session": "^1.17.3",
+    "connect-mongo": "^5.1.0",
+    "@types/express-session": "^1.17.10",
+    "cookie-parser": "^1.4.6",
+    "@types/cookie-parser": "^1.4.6"
+  },
+  "devDependencies": {},
+  "scripts": {},
+  "env": {
+    "SESSION_SECRET": "your-session-secret-key",
+    "SESSION_NAME": "sid",
+    "SESSION_MAX_AGE": "86400000"
+  }
 } 

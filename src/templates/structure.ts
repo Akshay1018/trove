@@ -146,8 +146,11 @@ export const AUTH_SPECIFIC: Record<Auth, string[]> = {
   ],
   session: [
     'auth/session/middleware/auth.middleware.ts.template',
+    'auth/session/middleware/validation.middleware.ts.template',
+    'auth/session/middleware/session.middleware.ts.template',
     'auth/session/controllers/auth.controller.ts.template',
-    'auth/session/routes/auth.routes.ts.template'
+    'auth/session/routes/auth.routes.ts.template',
+    'auth/session/config/session.config.ts.template'
   ]
 };
 

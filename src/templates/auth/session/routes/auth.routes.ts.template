@@ -1,1 +1,79 @@
-// TODO: Implement template
+import { Router } from 'express';
+import { AuthController } from '../controllers/auth.controller';
+import { UserService } from '../services/user.service';
+import { isAuthenticated, isNotAuthenticated } from '../middleware/auth.middleware';
+import { validateRegistration, validateLogin } from '../middleware/validation.middleware';
+
+export const authRouter = Router();
+const userService = new UserService();
+const authController = new AuthController(userService);
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               name:
+ *                 type: string
+ */
+authRouter.post('/register', isNotAuthenticated, validateRegistration, authController.register);
+
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Login user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ */
+authRouter.post('/login', isNotAuthenticated, validateLogin, authController.login);
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Logout user
+ *     security:
+ *       - session: []
+ */
+authRouter.post('/logout', isAuthenticated, authController.logout);
+
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get current user
+ *     security:
+ *       - session: []
+ */
+authRouter.get('/me', isAuthenticated, authController.getCurrentUser);

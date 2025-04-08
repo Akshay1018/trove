@@ -14,10 +14,25 @@ export class TemplateLoader {
     const fullPath = join(this.basePath, relativePath);
     const files = this.getFilesRecursively(fullPath);
 
-    return files.map(file => ({
-      source: file.replace(this.basePath + '/', ''),
-      target: file.replace(this.basePath + '/', '')
-    }));
+    return files.map(file => {
+      const source = file.replace(this.basePath + '/', '');
+      let target = source;
+
+      // Transform template paths to target paths
+      if (source.includes('/auth/')) {
+        target = source
+          .replace('/auth/', '/src/')
+          .replace('.template', '');
+      } else if (source.includes('/middleware/')) {
+        target = source
+          .replace('/middleware/', '/src/middleware/')
+          .replace('.template', '');
+      } else {
+        target = source.replace('.template', '');
+      }
+
+      return { source, target };
+    });
   }
 
   private getFilesRecursively(dir: string): string[] {
