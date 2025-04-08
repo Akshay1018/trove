@@ -1,0 +1,15 @@
+{
+  "files": {
+    "src/models/base.model.ts": "models/base.model.ts.template",
+    "src/models/user.model.ts": "models/user.model.ts.template",
+    "src/repositories/base.repository.ts": "repositories/base.repository.ts.template",
+    "src/repositories/user.repository.ts": "repositories/user.repository.ts.template",
+    "src/config/database.ts": "config/database.ts.template",
+    "src/migrations/001_init.sql": "migrations/001_init.sql.template"
+  },
+  "dependencies": {
+    "mysql2": "^3.0.0",
+    "@types/mysql": "^2.15.21",
+    "typeorm": "^0.3.0"
+  }
+} 

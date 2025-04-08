@@ -149,6 +149,11 @@ export class TemplateManager {
       return path;
     }
 
+    // Always ensure models, repositories, controllers, and services are in src directory
+    if (path.match(/^(models|repositories|controllers|services)\//)) {
+      return `src/${path}`;
+    }
+
     // Handle src directory files
     if (path.startsWith('src/')) {
       return path;
