@@ -1,14 +1,15 @@
 {
   "name": "mongodb",
   "description": "MongoDB database template",
-  "files": [
-    {
-      "source": "src/models/user.model.ts",
-      "target": "src/models/user.model.ts"
-    },
-    {
-      "source": "src/config/database.ts",
-      "target": "src/config/database.ts"
-    }
-  ]
+  "files": {
+    "src/models/base.model.ts": "models/base.model.ts.template",
+    "src/models/user.model.ts": "models/user.model.ts.template",
+    "src/repositories/base.repository.ts": "repositories/base.repository.ts.template",
+    "src/repositories/user.repository.ts": "repositories/user.repository.ts.template",
+    "src/config/database.ts": "config/database.ts.template"
+  },
+  "dependencies": {
+    "mongoose": "^7.0.0",
+    "@types/mongoose": "^5.11.97"
+  }
 } 
