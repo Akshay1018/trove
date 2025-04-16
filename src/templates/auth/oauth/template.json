@@ -3,24 +3,55 @@
   "description": "OAuth social authentication template",
   "files": [
     {
-      "source": "src/middleware/oauth.ts",
-      "target": "src/middleware/oauth.ts"
+      "source": "middleware/auth.middleware.ts.template",
+      "destination": "src/middleware/auth.middleware.ts"
     },
     {
-      "source": "src/config/oauth.ts",
-      "target": "src/config/oauth.ts"
+      "source": "controllers/auth.controller.ts.template",
+      "destination": "src/controllers/auth.controller.ts"
     },
     {
-      "source": "src/controllers/auth.controller.ts",
-      "target": "src/controllers/auth.controller.ts"
+      "source": "routes/auth.routes.ts.template",
+      "destination": "src/routes/auth.routes.ts"
     },
     {
-      "source": "src/routes/auth.ts",
-      "target": "src/routes/auth.ts"
+      "source": "config/oauth.config.ts.template",
+      "destination": "src/config/oauth.config.ts"
     },
     {
-      "source": "src/services/oauth.service.ts",
-      "target": "src/services/oauth.service.ts"
+      "source": "models/user.model.ts.template",
+      "destination": "src/models/user.model.ts"
+    },
+    {
+      "source": "views/auth/login.ejs.template",
+      "destination": "views/auth/login.ejs"
     }
+  ],
+  "directories": [
+    "views",
+    "views/auth"
+  ],
+  "dependencies": {
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-github2": "^0.1.12",
+    "express-session": "^1.17.3",
+    "connect-mongo": "^5.0.0",
+    "ejs": "^3.1.9"
+  },
+  "devDependencies": {
+    "@types/passport": "^1.0.12",
+    "@types/passport-google-oauth20": "^2.0.11",
+    "@types/passport-github2": "^1.2.5",
+    "@types/express-session": "^1.17.7",
+    "@types/ejs": "^3.1.2"
+  },
+  "envVars": [
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "GITHUB_CLIENT_ID",
+    "GITHUB_CLIENT_SECRET",
+    "SESSION_SECRET",
+    "BASE_URL"
   ]
 } 

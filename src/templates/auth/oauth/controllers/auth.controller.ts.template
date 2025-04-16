@@ -1,53 +1,66 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { userModel } from '@/models/user.model';
-import { logger } from '@/utils/logger';
+import { Request, Response } from 'express';
+import { UserModel } from '../models/user.model';
+import { logger } from '../utils/logger';
 
-export const login = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-  // Render login page with OAuth providers
-  reply.view('auth/login', {
+/**
+ * Render login page with OAuth providers
+ */
+export const login = (req: Request, res: Response): void => {
+  res.render('auth/login', {
     providers: ['google', 'github'],
+    title: 'Login - OAuth Authentication',
   });
 };
 
-export const logout = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+/**
+ * Handle logout
+ */
+export const logout = (req: Request, res: Response): void => {
   try {
-    // Clear session
-    await request.logOut();
-    reply.redirect('/');
+    req.logout((err) => {
+      if (err) {
+        logger.error('Logout error:', err);
+        return res.status(500).json({ message: 'Error during logout' });
+      }
+      res.redirect('/');
+    });
   } catch (error) {
     logger.error('Logout error:', error);
-    reply.status(500).send({
-      statusCode: 500,
-      error: 'Internal Server Error',
-      message: 'Error during logout',
-    });
+    res.status(500).json({ message: 'Error during logout' });
   }
 };
 
-export const getProfile = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+/**
+ * Get user profile
+ */
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = await userModel.findById(request.user.id);
-    if (!user) {
-      reply.status(404).send({
-        statusCode: 404,
-        error: 'Not Found',
-        message: 'User not found',
-      });
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authenticated' });
       return;
     }
 
-    // Update last login time
-    await userModel.updateLastLogin(user.id);
+    const user = await UserModel.findById(req.user.id).select('-__v');
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
 
     // Return user profile without sensitive information
-    const { password, ...profile } = user;
-    reply.send(profile);
+    const { password, ...profile } = user.toObject();
+    res.json(profile);
   } catch (error) {
     logger.error('Get profile error:', error);
-    reply.status(500).send({
-      statusCode: 500,
-      error: 'Internal Server Error',
-      message: 'Error fetching user profile',
-    });
+    res.status(500).json({ message: 'Error fetching user profile' });
   }
+};
+
+/**
+ * OAuth callback handler
+ */
+export const oauthCallback = (provider: string) => {
+  return (req: Request, res: Response): void => {
+    // This function doesn't need a body as it's handled by passport middleware
+    // The authenticate callback middleware will redirect appropriately
+  };
 }; 

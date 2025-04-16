@@ -157,20 +157,27 @@ export const AUTH_SPECIFIC: Record<Auth, string[]> = {
 export const CI_SPECIFIC: Record<CI, string[]> = {
   github: [
     'ci/github/.github/workflows/ci.yml.template',
-    'ci/github/.github/workflows/mongodb.yml.template'
+    'ci/github/.github/workflows/mongodb.yml.template',
+    'ci/github/.github/workflows/postgres.yml.template',
   ],
   gitlab: [
     'ci/gitlab/.gitlab-ci.yml.template',
-    'ci/gitlab/mongodb-ci.yml.template'
+    'ci/gitlab/mongodb-ci.yml.template',
+    'ci/gitlab/postgres-ci.yml.template',
+    'ci/gitlab/mysql-ci.yml.template',
   ],
   jenkins: [
     'ci/jenkins/Jenkinsfile.template',
-    'ci/jenkins/mongodb-pipeline.groovy.template'
+    'ci/jenkins/mongodb-pipeline.groovy.template',
+    'ci/jenkins/postgres-pipeline.groovy.template',
+    'ci/jenkins/mysql-pipeline.groovy.template',
   ],
   bitbucket: [
     'ci/bitbucket/bitbucket-pipelines.yml.template',
-    'ci/bitbucket/mongodb-pipeline.yml.template'
-  ]
+    'ci/bitbucket/mongodb-pipeline.yml.template',
+    'ci/bitbucket/postgres-pipeline.yml.template',
+    'ci/bitbucket/mysql-pipeline.yml.template',
+  ],
 };
 
 export function getRequiredFiles(options: TemplateOptions): string[] {

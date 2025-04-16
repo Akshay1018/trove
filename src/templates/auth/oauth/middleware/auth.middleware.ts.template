@@ -1,10 +1,48 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import passport from '@fastify/passport';
+import { Request, Response, NextFunction } from 'express';
+import passport from 'passport';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GitHubStrategy } from 'passport-github2';
-import { config } from '@/config';
-import { logger } from '@/utils/logger';
-import { userModel } from '@/models/user.model';
+import { config } from '../config';
+import { logger } from '../utils/logger';
+import { UserModel } from '../models/user.model';
+
+// Configure session middleware
+export const configureSession = (app: any): void => {
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'oauth-session-secret',
+      resave: false,
+      saveUninitialized: false,
+      store: MongoStore.create({
+        mongoUrl: config.mongodb.uri,
+        ttl: 14 * 24 * 60 * 60, // 14 days
+      }),
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+      },
+    })
+  );
+
+  app.use(passport.initialize());
+  app.use(passport.session());
+};
+
+// Define user model interface for passport
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+      email: string;
+      name: string;
+      provider: string;
+      providerId: string;
+    }
+  }
+}
 
 // Configure Passport OAuth strategies
 passport.use(
@@ -12,21 +50,42 @@ passport.use(
     {
       clientID: config.oauth.google.clientId,
       clientSecret: config.oauth.google.clientSecret,
-      callbackURL: `${config.oauth.callbackUrl}/google`,
+      callbackURL: `${config.baseUrl}/auth/google/callback`,
       scope: ['profile', 'email'],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const user = await userModel.findOrCreateByProvider(
-          'google',
-          profile.id,
-          profile.emails?.[0]?.value || '',
-          profile.displayName
-        );
-        done(null, user);
+        // Find or create user by provider
+        const email = profile.emails?.[0]?.value || '';
+        const name = profile.displayName || '';
+
+        let user = await UserModel.findOne({
+          $or: [
+            { providerId: profile.id, provider: 'google' },
+            { email: email }
+          ]
+        });
+
+        if (!user && email) {
+          user = await UserModel.create({
+            email,
+            name,
+            provider: 'google',
+            providerId: profile.id,
+          });
+        } else if (user) {
+          // Update provider info if user exists
+          if (user.provider !== 'google') {
+            user.provider = 'google';
+            user.providerId = profile.id;
+            await user.save();
+          }
+        }
+
+        return done(null, user);
       } catch (error) {
         logger.error('Google OAuth error:', error);
-        done(error as Error);
+        return done(error as Error);
       }
     }
   )
@@ -37,20 +96,40 @@ passport.use(
     {
       clientID: config.oauth.github.clientId,
       clientSecret: config.oauth.github.clientSecret,
-      callbackURL: `${config.oauth.callbackUrl}/github`,
+      callbackURL: `${config.baseUrl}/auth/github/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const user = await userModel.findOrCreateByProvider(
-          'github',
-          profile.id,
-          profile.emails?.[0]?.value || '',
-          profile.displayName || profile.username || ''
-        );
-        done(null, user);
+        const email = profile.emails?.[0]?.value || '';
+        const name = profile.displayName || profile.username || '';
+
+        let user = await UserModel.findOne({
+          $or: [
+            { providerId: profile.id, provider: 'github' },
+            { email: email }
+          ]
+        });
+
+        if (!user && email) {
+          user = await UserModel.create({
+            email,
+            name,
+            provider: 'github',
+            providerId: profile.id,
+          });
+        } else if (user) {
+          // Update provider info if user exists
+          if (user.provider !== 'github') {
+            user.provider = 'github';
+            user.providerId = profile.id;
+            await user.save();
+          }
+        }
+
+        return done(null, user);
       } catch (error) {
         logger.error('GitHub OAuth error:', error);
-        done(error as Error);
+        return done(error as Error);
       }
     }
   )
@@ -62,9 +141,9 @@ passport.serializeUser((user, done) => {
 });
 
 // Deserialize user from the session
-passport.deserializeUser(async (id: number, done) => {
+passport.deserializeUser(async (id: string, done) => {
   try {
-    const user = await userModel.findById(id);
+    const user = await UserModel.findById(id);
     done(null, user);
   } catch (error) {
     done(error);
@@ -87,15 +166,15 @@ export const authenticateCallback = (provider: 'google' | 'github') => {
 };
 
 // Check if user is authenticated
-export const isAuthenticated = async (
-  request: FastifyRequest,
-  reply: FastifyReply
-) => {
-  if (!request.user) {
-    reply.status(401).send({
-      statusCode: 401,
-      error: 'Unauthorized',
-      message: 'Authentication required',
-    });
+export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (req.isAuthenticated()) {
+    return next();
   }
+  res.status(401).json({ message: 'Unauthorized' });
+};
+
+// Handle OAuth errors
+export const handleAuthError = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  logger.error('OAuth error:', err);
+  res.status(500).json({ message: 'Authentication error', error: err.message });
 }; 
