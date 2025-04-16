@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { AuthController } from '../controllers/auth.controller';
-import { UserService } from '../services/user.service';
-import { isAuthenticated, isNotAuthenticated } from '../middleware/auth.middleware';
-import { validateRegistration, validateLogin } from '../middleware/validation.middleware';
+import { AuthController } from '@/controllers/auth.controller';
+import { UserService } from '@/services/user.service';
+import { isAuthenticated, isNotAuthenticated } from '@/middleware/auth.middleware';
+import { validateRegistration, validateLogin } from '@/middleware/validation.middleware';
 
 export const authRouter = Router();
 const userService = new UserService();

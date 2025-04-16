@@ -1,1 +1,38 @@
- 
+import { config } from '../config';
+import passport from 'passport';
+import session from 'express-session';
+import { Express } from 'express';
+import MongoStore from 'connect-mongo';
+
+/**
+ * Configure session and passport for OAuth authentication
+ */
+export const configureOAuth = (app: Express): void => {
+  // Configure session
+  app.use(
+    session({
+      secret: config.sessionSecret || 'oauth-secret-key',
+      resave: false,
+      saveUninitialized: false,
+      store: MongoStore.create({
+        mongoUrl: config.databaseUrl,
+        ttl: 60 * 60 * 24, // 1 day
+      }),
+      cookie: {
+        secure: config.env === 'production',
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        httpOnly: true,
+      },
+    })
+  );
+
+  // Initialize passport
+  app.use(passport.initialize());
+  app.use(passport.session());
+  
+  // Add user to locals for views
+  app.use((req, res, next) => {
+    res.locals.user = req.user;
+    next();
+  });
+}; 

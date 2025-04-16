@@ -428,17 +428,12 @@ npm run dev
 ## 🗺️ Roadmap
 
 ### Framework Support
-- [x] Express.js
-- [x] NestJS (basic)
 - [ ] Fastify
 - [ ] Koa
 - [ ] Hapi
 - [ ] Advanced NestJS features
 
 ### Database Support
-- [x] MongoDB
-- [x] PostgreSQL (basic)
-- [x] MySQL (basic)
 - [ ] Advanced PostgreSQL features
 - [ ] Advanced MySQL features
 - [ ] Redis

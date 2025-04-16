@@ -1,1 +1,36 @@
- 
+import { Router } from 'express';
+import passport from 'passport';
+import * as authController from '@/controllers/auth.controller';
+import { isAuthenticated, authenticate, authenticateCallback, handleAuthError } from '@/middleware/auth.middleware';
+
+const router = Router();
+
+// Login page
+router.get('/login', authController.login);
+
+// Logout
+router.get('/logout', isAuthenticated, authController.logout);
+
+// Google OAuth routes
+router.get('/google', authenticate('google'));
+router.get(
+  '/google/callback',
+  authenticateCallback('google'),
+  authController.oauthCallback('google')
+);
+
+// GitHub OAuth routes
+router.get('/github', authenticate('github'));
+router.get(
+  '/github/callback',
+  authenticateCallback('github'),
+  authController.oauthCallback('github')
+);
+
+// User profile
+router.get('/profile', isAuthenticated, authController.getProfile);
+
+// Error handling
+router.use(handleAuthError);
+
+export default router; 
