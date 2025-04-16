@@ -1,11 +1,11 @@
-import { TemplateOptions } from '../types/template';
+import { TemplateOptions as ExternalTemplateOptions } from '../types/template';
 import fs from 'fs';
 import path from 'path';
 
 export type Framework = 'express' | 'koa' | 'fastify' | 'nestjs';
-export type Auth = 'jwt' | 'oauth' | 'session';
-export type CI = 'github' | 'gitlab' | 'jenkins' | 'bitbucket';
-export type Database = 'mongodb' | 'postgres' | 'mysql';
+export type Auth = 'jwt' | 'oauth' | 'session' | 'skip';
+export type CI = 'github' | 'gitlab' | 'jenkins' | 'bitbucket' | 'skip';
+export type Database = 'mongodb' | 'postgres' | 'mysql' | 'skip';
 
 export interface FrameworkConfig {
   files: {
@@ -130,7 +130,8 @@ export const DATABASE_SPECIFIC: Record<Database, DatabaseConfig> = {
         'databases/mysql/migrations/001_init.sql.template'
       ]
     }
-  }
+  },
+  skip: { files: { base: [] } }
 };
 
 export const AUTH_SPECIFIC: Record<Auth, string[]> = {
@@ -151,7 +152,8 @@ export const AUTH_SPECIFIC: Record<Auth, string[]> = {
     'auth/session/controllers/auth.controller.ts.template',
     'auth/session/routes/auth.routes.ts.template',
     'auth/session/config/session.config.ts.template'
-  ]
+  ],
+  skip: []
 };
 
 export const CI_SPECIFIC: Record<CI, string[]> = {
@@ -159,6 +161,7 @@ export const CI_SPECIFIC: Record<CI, string[]> = {
     'ci/github/.github/workflows/ci.yml.template',
     'ci/github/.github/workflows/mongodb.yml.template',
     'ci/github/.github/workflows/postgres.yml.template',
+    'ci/github/.github/workflows/mysql.yml.template',
   ],
   gitlab: [
     'ci/gitlab/.gitlab-ci.yml.template',
@@ -178,9 +181,10 @@ export const CI_SPECIFIC: Record<CI, string[]> = {
     'ci/bitbucket/postgres-pipeline.yml.template',
     'ci/bitbucket/mysql-pipeline.yml.template',
   ],
+  skip: []
 };
 
-export function getRequiredFiles(options: TemplateOptions): string[] {
+export function getRequiredFiles(options: ExternalTemplateOptions): string[] {
   let files = [...BASE_STRUCTURE.files.base, ...BASE_STRUCTURE.files.src];
 
   // Add framework-specific files
@@ -218,7 +222,7 @@ export function getRequiredFiles(options: TemplateOptions): string[] {
   return files;
 }
 
-export function createDirectoryStructure(options: TemplateOptions): void {
+export function createDirectoryStructure(options: ExternalTemplateOptions): void {
   // Create base directories
   const baseDirectories = [
     'src',
@@ -267,7 +271,7 @@ export function createDirectoryStructure(options: TemplateOptions): void {
   });
 }
 
-export function createProjectStructure(options: TemplateOptions): void {
+export function createProjectStructure(options: ExternalTemplateOptions): void {
   // Create directories
   createDirectoryStructure(options);
 

@@ -1,7 +1,7 @@
 export type Framework = 'express' | 'koa' | 'nestjs' | 'fastify';
 export type Database = 'mongodb' | 'postgres' | 'mysql' | 'skip';
 export type Auth = 'jwt' | 'session' | 'oauth' | 'skip';
-export type CI = 'github' | 'gitlab' | 'bitbucket' | 'skip';
+export type CI = 'github' | 'gitlab' | 'bitbucket' | 'jenkins' | 'skip';
 
 export interface TemplateOptions {
   projectName: string;
