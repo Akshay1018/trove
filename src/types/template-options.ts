@@ -15,4 +15,7 @@ export interface TemplateOptions {
   author?: string;
   license?: string;
   version?: string;
+  title?: string;
+  providers?: string[];
+  name?: string;
 } 
