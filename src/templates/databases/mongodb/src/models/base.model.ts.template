@@ -1,0 +1,49 @@
+import { Schema, Document, Model, model } from 'mongoose';
+
+export interface BaseDocument extends Document {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface BaseModel<T extends BaseDocument> extends Model<T> {
+  findByIdOrThrow(id: string): Promise<T>;
+}
+
+export const baseSchema = new Schema({
+  // Common fields for all models
+}, {
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform: (_, ret) => {
+      delete ret._id;
+      delete ret.__v;
+      return ret;
+    }
+  }
+});
+
+export function createModel<T extends BaseDocument>(
+  name: string,
+  schema: Schema
+): BaseModel<T> {
+  // Add base schema
+  schema.add(baseSchema);
+
+  // Add static methods
+  schema.statics.findByIdOrThrow = async function(id: string): Promise<T> {
+    const doc = await this.findById(id);
+    if (!doc) {
+      throw new Error(`${name} not found with id ${id}`);
+    }
+    return doc;
+  };
+
+  return model<T, BaseModel<T>>(name, schema);
+}
+
+// Add any common methods or middleware here
+baseSchema.pre('save', function (next) {
+  this.updatedAt = new Date();
+  next();
+}); 

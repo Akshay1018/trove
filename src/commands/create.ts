@@ -4,11 +4,15 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { TemplateManager } from '../utils/template-manager';
 import { logger } from '../utils/logger';
-import { Framework, Database, Auth, CI } from '../types/template';
+import { Framework, Database, Auth, CI, TemplateOptions as ExternalTemplateOptions } from '../types/template';
+import path from 'path';
+import { TemplateOptions as ManagerTemplateOptions } from '../types/template-options';
 
 interface CreateCommandOptions {
   defaultFramework?: string;
   defaultDatabase?: string;
+  defaultAuth?: string;
+  defaultCI?: string;
   projectName?: string;
 }
 
@@ -66,6 +70,8 @@ export async function createCommand(program: Command, options: CreateCommandOpti
         type: 'list',
         name: 'auth',
         message: chalk.green('Which authentication method would you like to use?'),
+        default: options.defaultAuth || 'jwt',
+        when: !options.defaultAuth,
         choices: [
           { name: chalk.magenta('JWT') + chalk.gray(' - JSON Web Token based authentication'), value: 'jwt' },
           { name: chalk.magenta('Session') + chalk.gray(' - Traditional session-based auth'), value: 'session' },
@@ -77,6 +83,8 @@ export async function createCommand(program: Command, options: CreateCommandOpti
         type: 'list',
         name: 'ci',
         message: chalk.green('Which CI/CD platform would you like to use?'),
+        default: options.defaultCI || 'github',
+        when: !options.defaultCI,
         choices: [
           { name: chalk.cyan('GitHub Actions') + chalk.gray(' - Modern CI/CD for GitHub'), value: 'github' },
           { name: chalk.cyan('GitLab CI') + chalk.gray(' - Built-in CI/CD for GitLab'), value: 'gitlab' },
@@ -91,15 +99,24 @@ export async function createCommand(program: Command, options: CreateCommandOpti
       spinner: 'dots'
     }).start();
 
-    const templateManager = new TemplateManager();
     const projectName = options.projectName || answers.projectName;
-    await templateManager.createProject(projectName, {
-      framework: options.defaultFramework as Framework || answers.framework,
-      database: options.defaultDatabase as Database || answers.database,
-      auth: answers.auth,
-      ci: answers.ci,
-      projectName
-    });
+    const projectPath = path.join(process.cwd(), projectName);
+    const templateOptions: ManagerTemplateOptions = {
+      framework: (options.defaultFramework as Framework) || answers.framework,
+      database: (options.defaultDatabase as Database) || answers.database,
+      auth: (options.defaultAuth as Auth) || answers.auth,
+      ci: (options.defaultCI as CI) || answers.ci,
+      projectName: projectName,
+      description: `A modern Node.js backend application using ${answers.framework || options.defaultFramework}`,
+      author: '',
+      version: '1.0.0',
+      license: 'MIT',
+      packageManager: 'npm'
+    };
+
+    const templateManager = new TemplateManager(templateOptions, projectPath);
+
+    await templateManager.createProject(projectName);
 
     spinner.succeed(chalk.green('Project created successfully! 🎉'));
 

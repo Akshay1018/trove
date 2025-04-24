@@ -1,12 +1,22 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
+<% if (auth !== 'skip') { %>
+import { authRoutes } from './auth.routes';
+<% } %>
 
 const router = Router();
 
-router.use('/auth', authRoutes);
-
+// Health check
 router.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
-export default router; 
+<% if (auth !== 'skip') { %>
+// Auth routes
+router.use('/auth', authRoutes);
+<% } %>
+
+export { router as routes }; 

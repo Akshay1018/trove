@@ -1,0 +1,91 @@
+import { Model, Document, FilterQuery, UpdateQuery } from 'mongoose';
+import { PaginationOptions, PaginatedResult } from '../../../types/pagination';
+
+export abstract class BaseRepository<T extends Document> {
+  constructor(protected model: Model<T>) {}
+
+  async create(data: Partial<T>): Promise<T> {
+    const entity = new this.model(data);
+    return entity.save();
+  }
+
+  async findAll(options: PaginationOptions): Promise<PaginatedResult<T>> {
+    const { page = 1, limit = 10, sort, filter = {} } = options;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.model
+        .find(filter as FilterQuery<T>)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.model.countDocuments(filter as FilterQuery<T>),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  async findById(id: string): Promise<T | null> {
+    return this.model.findById(id).exec();
+  }
+
+  async findOne(filter: Partial<T>): Promise<T | null> {
+    return this.model.findOne(filter as FilterQuery<T>).exec();
+  }
+
+  async findMany(filter: Partial<T>): Promise<T[]> {
+    return this.model.find(filter as FilterQuery<T>).exec();
+  }
+
+  async update(id: string, data: Partial<T>): Promise<T | null> {
+    return this.model
+      .findByIdAndUpdate(id, data as UpdateQuery<T>, { new: true })
+      .exec();
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.model.findByIdAndDelete(id).exec();
+    return result !== null;
+  }
+
+  async deleteMany(filter: Partial<T>): Promise<boolean> {
+    const result = await this.model.deleteMany(filter as FilterQuery<T>).exec();
+    return result.deletedCount > 0;
+  }
+
+  async count(filter: Partial<T>): Promise<number> {
+    return this.model.countDocuments(filter as FilterQuery<T>).exec();
+  }
+
+  async exists(filter: Partial<T>): Promise<boolean> {
+    const count = await this.count(filter);
+    return count > 0;
+  }
+
+  async bulkCreate(data: Partial<T>[]): Promise<T[]> {
+    return this.model.insertMany(data);
+  }
+
+  async bulkUpdate(
+    filter: Partial<T>,
+    update: Partial<T>
+  ): Promise<boolean> {
+    const result = await this.model
+      .updateMany(filter as FilterQuery<T>, update as UpdateQuery<T>)
+      .exec();
+    return result.modifiedCount > 0;
+  }
+} 

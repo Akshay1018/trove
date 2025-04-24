@@ -13,9 +13,19 @@ program
 program
   .command('create [project-name]')
   .description('Create a new Node.js backend project')
-  .action(async (projectName) => {
+  .option('-f, --framework <framework>', 'Framework to use (express, koa, nestjs, fastify)')
+  .option('-d, --database <database>', 'Database to use (mongodb, postgres, mysql)')
+  .option('-a, --auth <auth>', 'Authentication method (jwt, session, oauth)')
+  .option('-c, --ci <ci>', 'CI/CD platform (github, gitlab, bitbucket, jenkins)')
+  .action(async (projectName, cmdOptions) => {
     try {
-      await createCommand(program, { projectName });
+      await createCommand(program, {
+        projectName,
+        defaultFramework: cmdOptions.framework,
+        defaultDatabase: cmdOptions.database,
+        defaultAuth: cmdOptions.auth,
+        defaultCI: cmdOptions.ci
+      });
     } catch (error) {
       console.error('Error:', error instanceof Error ? error.message : String(error));
       process.exit(1);

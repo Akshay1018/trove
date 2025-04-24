@@ -1,0 +1,51 @@
+import { Document } from 'mongoose';
+import { BaseRepository } from '../repositories/base.repository';
+import { ApiError } from '../utils/api-error';
+
+export class BaseService<T extends Document> {
+  constructor(protected readonly repository: BaseRepository<T>) {}
+
+  async create(data: Partial<T>): Promise<T> {
+    return this.repository.create(data);
+  }
+
+  async findById(id: string): Promise<T> {
+    const entity = await this.repository.findById(id);
+    if (!entity) {
+      throw ApiError.notFound('Entity not found');
+    }
+    return entity;
+  }
+
+  async findOne(filter: any): Promise<T | null> {
+    return this.repository.findOne(filter);
+  }
+
+  async find(filter: any, options?: any): Promise<T[]> {
+    return this.repository.find(filter, options);
+  }
+
+  async update(id: string, data: Partial<T>): Promise<T> {
+    const updated = await this.repository.update(id, data);
+    if (!updated) {
+      throw ApiError.notFound('Entity not found');
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<T> {
+    const deleted = await this.repository.delete(id);
+    if (!deleted) {
+      throw ApiError.notFound('Entity not found');
+    }
+    return deleted;
+  }
+
+  async exists(filter: any): Promise<boolean> {
+    return this.repository.exists(filter);
+  }
+
+  async count(filter: any): Promise<number> {
+    return this.repository.count(filter);
+  }
+} 

@@ -1,0 +1,38 @@
+import { Model, Document, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
+
+export class BaseRepository<T extends Document> {
+  constructor(protected readonly model: Model<T>) {}
+
+  async create(data: Partial<T>): Promise<T> {
+    const entity = new this.model(data);
+    return entity.save();
+  }
+
+  async findById(id: string): Promise<T | null> {
+    return this.model.findById(id);
+  }
+
+  async findOne(filter: FilterQuery<T>): Promise<T | null> {
+    return this.model.findOne(filter);
+  }
+
+  async find(filter: FilterQuery<T>, options?: QueryOptions): Promise<T[]> {
+    return this.model.find(filter, null, options);
+  }
+
+  async update(id: string, data: UpdateQuery<T>): Promise<T | null> {
+    return this.model.findByIdAndUpdate(id, data, { new: true });
+  }
+
+  async delete(id: string): Promise<T | null> {
+    return this.model.findByIdAndDelete(id);
+  }
+
+  async exists(filter: FilterQuery<T>): Promise<boolean> {
+    return this.model.exists(filter).then(result => result !== null);
+  }
+
+  async count(filter: FilterQuery<T>): Promise<number> {
+    return this.model.countDocuments(filter);
+  }
+} 

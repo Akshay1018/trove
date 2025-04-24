@@ -1,40 +1,39 @@
 import winston from 'winston';
 
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  defaultMeta: { service: '<%= projectName %>' },
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      ),
-    }),
-  ],
+const { combine, timestamp, printf, colorize } = winston.format;
+
+const logFormat = printf(({ level, message, timestamp, ...metadata }) => {
+  let msg = `${timestamp} [${level}] ${message}`;
+  if (Object.keys(metadata).length > 0) {
+    msg += ` ${JSON.stringify(metadata)}`;
+  }
+  return msg;
 });
 
-// Add file transport in production
-if (process.env.NODE_ENV === 'production') {
-  logger.add(
-    new winston.transports.File({
-      filename: 'logs/error.log',
+export const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: combine(
+    timestamp(),
+    logFormat
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: combine(
+        colorize(),
+        timestamp(),
+        logFormat
+      )
+    }),
+    new winston.transports.File({ 
+      filename: 'logs/error.log', 
       level: 'error',
       maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    })
-  );
-  logger.add(
-    new winston.transports.File({
+      maxFiles: 5
+    }),
+    new winston.transports.File({ 
       filename: 'logs/combined.log',
       maxsize: 5242880, // 5MB
-      maxFiles: 5,
+      maxFiles: 5
     })
-  );
-}
-
-export { logger }; 
+  ]
+}); 

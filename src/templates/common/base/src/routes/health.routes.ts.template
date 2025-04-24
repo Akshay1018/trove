@@ -1,0 +1,38 @@
+import { Router } from 'express';
+import { HealthController } from '../controllers/health.controller';
+
+const router = Router();
+const healthController = new HealthController();
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Get API health status
+ *     description: Returns the health status of the API
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *                 timestamp:
+ *                   type: string
+ *                   example: 2024-04-22T05:37:37.738Z
+ *                 uptime:
+ *                   type: number
+ *                   example: 123.45
+ *                 version:
+ *                   type: string
+ *                   example: 1.0.0
+ */
+router.get('/', healthController.getHealth);
+
+export { router as healthRouter }; 

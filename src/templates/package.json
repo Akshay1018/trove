@@ -1,0 +1,17 @@
+{
+  "name": "<%= projectName %>",
+  "version": "1.0.0",
+  "description": "Generated using create-node-backend-temp",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "start": "node dist/src/index.js",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

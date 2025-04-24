@@ -1,34 +1,48 @@
 {
   "name": "<%= projectName %>",
   "version": "1.0.0",
-  "description": "A modern Node.js backend application",
+  "description": "<%= description %>",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn src/index.ts",
+    "dev": "nodemon",
     "build": "tsc",
-    "lint": "eslint . --ext .ts",
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "prepare": "husky install"
   },
+  "keywords": [],
+  "author": "<%= author %>",
+  "license": "<%= license %>",
   "dependencies": {
-    <% Object.entries(dependencies).forEach(([name, version], index) => { %>
-    "<%= name %>": "<%= version %>"<%= index < Object.keys(dependencies).length - 1 ? ',' : '' %>
-    <% }); %>
+    "@types/node": "^20.0.0",
+    "dotenv": "^16.0.0",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
-    <% Object.entries(devDependencies).forEach(([name, version], index) => { %>
-    "<%= name %>": "<%= version %>"<%= index < Object.keys(devDependencies).length - 1 ? ',' : '' %>
-    <% }); %>
+    "@types/jest": "^29.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "husky": "^9.0.0",
+    "jest": "^29.0.0",
+    "lint-staged": "^15.0.0",
+    "nodemon": "^3.0.0",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "keywords": [
-    "nodejs",
-    "typescript",
-    "api"
-  ],
-  "author": "",
-  "license": "MIT"
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
 } 

@@ -1,0 +1,121 @@
+import { Request, Response, NextFunction } from 'express';
+import { BaseService } from '../services/base.service';
+import { logger } from '../utils/logger';
+import { HttpStatus } from '../types/http';
+
+export abstract class BaseController<T> {
+  constructor(protected service: BaseService<T>) {}
+
+  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data = await this.service.create(req.body);
+      this.sendResponse(res, data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async findAll(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { page, limit } = this.getPaginationParams(req);
+      const options = {
+        page,
+        limit,
+        sort: req.query.sort as string,
+        filter: req.query.filter as Record<string, any>
+      };
+
+      const data = await this.service.findAll(options);
+      this.sendResponse(res, data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async findById(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const data = await this.service.findById(id);
+      
+      if (!data) {
+        this.sendError(res, 'Resource not found');
+        return;
+      }
+
+      this.sendResponse(res, data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const data = await this.service.update(id, req.body);
+      
+      if (!data) {
+        this.sendError(res, 'Resource not found');
+        return;
+      }
+
+      this.sendResponse(res, data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const success = await this.service.delete(id);
+      
+      if (!success) {
+        this.sendError(res, 'Resource not found');
+        return;
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  protected sendResponse<T>(
+    res: Response,
+    data: T,
+    statusCode: number = HttpStatus.OK
+  ): Response {
+    return res.status(statusCode).json({
+      success: true,
+      data,
+    });
+  }
+
+  protected sendError(
+    res: Response,
+    message: string,
+    statusCode: number = HttpStatus.INTERNAL_SERVER_ERROR,
+    errors?: any
+  ): Response {
+    return res.status(statusCode).json({
+      success: false,
+      message,
+      errors,
+    });
+  }
+
+  protected getPaginationParams(req: Request): { page: number; limit: number } {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    return { page, limit };
+  }
+
+  protected getSkipValue(page: number, limit: number): number {
+    return (page - 1) * limit;
+  }
+
+  protected handleError(error: any, res: Response): void {
+    logger.error('Controller Error:', error);
+    this.sendError(res, 'Internal server error');
+  }
+} 

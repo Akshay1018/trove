@@ -1,0 +1,29 @@
+import { Request, Response, NextFunction } from 'express';
+import { ApiError } from '../utils/api-error';
+import { logger } from '../utils/logger';
+
+export const errorHandler = (
+  error: Error,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+): void => {
+  if (error instanceof ApiError) {
+    logger.error(`API Error: ${error.message}`, { error });
+    res.status(error.statusCode).json({
+      status: 'error',
+      statusCode: error.statusCode,
+      message: error.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    });
+    return;
+  }
+
+  logger.error(`Unexpected Error: ${error.message}`, { error });
+  res.status(500).json({
+    status: 'error',
+    statusCode: 500,
+    message: 'Internal Server Error',
+    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+  });
+}; 
