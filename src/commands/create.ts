@@ -111,6 +111,9 @@ export async function createCommand(program: Command, options: CreateCommandOpti
       author: '',
       version: '1.0.0',
       license: 'MIT',
+      title: projectName,
+      providers: ['google', 'github'],
+      name: projectName,
       packageManager: 'npm'
     };
 
