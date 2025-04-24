@@ -1,6 +1,6 @@
 import { TemplateOptions as ExternalTemplateOptions } from '../types/template';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export type Framework = 'express' | 'koa' | 'fastify' | 'nestjs';
 export type Auth = 'jwt' | 'oauth' | 'session' | 'skip';
@@ -29,25 +29,38 @@ export const BASE_STRUCTURE = {
       'tsconfig.json',
       '.eslintrc.json',
       '.prettierrc',
-      'jest.config.js'
+      'jest.config.js',
+      'nodemon.json'
     ],
     src: [
+      'src/index.ts',
+      'src/app.ts',
+      'src/types/index.d.ts',
+      'src/types/express/index.d.ts',
+      'src/types/pagination.ts',
       'src/config/index.ts',
+      'src/config/database.ts',
       'src/utils/logger.ts',
+      'src/utils/validation.ts',
+      'src/middleware/error.middleware.ts',
+      'src/middleware/validation.middleware.ts',
+      'src/middleware/logger.middleware.ts',
+      'src/controllers/base.controller.ts',
+      'src/services/base.service.ts',
+      'src/models/base.model.ts',
+      'src/repositories/base.repository.ts',
       // Unit tests
-      'src/__tests__/unit/controllers.test.ts.template',
-      'src/__tests__/unit/services.test.ts.template',
-      'src/__tests__/unit/repositories.test.ts.template',
-      'src/__tests__/unit/models.test.ts.template',
-      'src/__tests__/unit/utils.test.ts.template',
-      'src/__tests__/unit/config.test.ts.template',
-      'src/__tests__/unit/.gitkeep',
+      'src/__tests__/unit/controllers.test.ts',
+      'src/__tests__/unit/services.test.ts',
+      'src/__tests__/unit/repositories.test.ts',
+      'src/__tests__/unit/models.test.ts',
+      'src/__tests__/unit/utils.test.ts',
+      'src/__tests__/unit/config.test.ts',
       // Integration tests
-      'src/__tests__/integration/api.test.ts.template',
-      'src/__tests__/integration/database.test.ts.template',
-      'src/__tests__/integration/auth.test.ts.template',
-      'src/__tests__/integration/health.test.ts.template',
-      'src/__tests__/integration/.gitkeep'
+      'src/__tests__/integration/api.test.ts',
+      'src/__tests__/integration/database.test.ts',
+      'src/__tests__/integration/auth.test.ts',
+      'src/__tests__/integration/health.test.ts'
     ]
   }
 };
@@ -56,40 +69,67 @@ export const FRAMEWORK_SPECIFIC: Record<Framework, FrameworkConfig> = {
   express: {
     files: {
       base: [
-        'frameworks/express/src/app.ts.template',
-        'frameworks/express/src/index.ts.template',
-        'frameworks/express/src/routes/index.ts.template',
-        'frameworks/express/src/middleware/error.middleware.ts.template'
+        'src/app.ts',
+        'src/index.ts',
+        'src/routes/index.ts',
+        'src/routes/api.routes.ts',
+        'src/middleware/error.middleware.ts',
+        'src/middleware/validation.middleware.ts',
+        'src/middleware/logger.middleware.ts',
+        'src/controllers/base.controller.ts',
+        'src/controllers/health.controller.ts',
+        'src/services/base.service.ts',
+        'src/utils/swagger.ts'
       ]
     }
   },
   koa: {
     files: {
       base: [
-        'frameworks/koa/src/app.ts.template',
-        'frameworks/koa/src/index.ts.template',
-        'frameworks/koa/src/routes/index.ts.template',
-        'frameworks/koa/src/middleware/error.middleware.ts.template'
+        'src/app.ts',
+        'src/index.ts',
+        'src/routes/index.ts',
+        'src/routes/api.routes.ts',
+        'src/middleware/error.middleware.ts',
+        'src/middleware/validation.middleware.ts',
+        'src/middleware/logger.middleware.ts',
+        'src/controllers/base.controller.ts',
+        'src/controllers/health.controller.ts',
+        'src/services/base.service.ts'
       ]
     }
   },
   fastify: {
     files: {
       base: [
-        'frameworks/fastify/src/app.ts.template',
-        'frameworks/fastify/src/index.ts.template',
-        'frameworks/fastify/src/routes/index.ts.template',
-        'frameworks/fastify/src/plugins/swagger.ts.template'
+        'src/app.ts',
+        'src/index.ts',
+        'src/routes/index.ts',
+        'src/routes/api.routes.ts',
+        'src/plugins/swagger.ts',
+        'src/plugins/cors.ts',
+        'src/plugins/helmet.ts',
+        'src/controllers/base.controller.ts',
+        'src/controllers/health.controller.ts',
+        'src/services/base.service.ts'
       ]
     }
   },
   nestjs: {
     files: {
       base: [
-        'frameworks/nestjs/src/main.ts.template',
-        'frameworks/nestjs/src/app.module.ts.template',
-        'frameworks/nestjs/src/app.controller.ts.template',
-        'frameworks/nestjs/src/app.service.ts.template'
+        'src/main.ts',
+        'src/app.module.ts',
+        'src/app.controller.ts',
+        'src/app.service.ts',
+        'src/common/filters/http-exception.filter.ts',
+        'src/common/interceptors/logging.interceptor.ts',
+        'src/common/interceptors/transform.interceptor.ts',
+        'src/common/guards/jwt-auth.guard.ts',
+        'src/common/decorators/roles.decorator.ts',
+        'src/modules/health/health.module.ts',
+        'src/modules/health/health.controller.ts',
+        'src/modules/health/health.service.ts'
       ]
     }
   }
@@ -99,35 +139,38 @@ export const DATABASE_SPECIFIC: Record<Database, DatabaseConfig> = {
   mongodb: {
     files: {
       base: [
-        'databases/mongodb/config/database.ts.template',
-        'databases/mongodb/models/base.model.ts.template',
-        'databases/mongodb/models/user.model.ts.template',
-        'databases/mongodb/repositories/base.repository.ts.template',
-        'databases/mongodb/repositories/user.repository.ts.template'
+        'src/config/database.ts',
+        'src/models/base.model.ts',
+        'src/models/user.model.ts',
+        'src/repositories/base.repository.ts',
+        'src/repositories/user.repository.ts',
+        'src/types/mongoose.d.ts'
       ]
     }
   },
   postgres: {
     files: {
       base: [
-        'databases/postgres/config/database.ts.template',
-        'databases/postgres/models/base.model.ts.template',
-        'databases/postgres/models/user.model.ts.template',
-        'databases/postgres/repositories/base.repository.ts.template',
-        'databases/postgres/repositories/user.repository.ts.template',
-        'databases/postgres/migrations/001_init.sql.template'
+        'src/config/database.ts',
+        'src/models/base.model.ts',
+        'src/models/user.model.ts',
+        'src/repositories/base.repository.ts',
+        'src/repositories/user.repository.ts',
+        'src/migrations/001_init.sql',
+        'src/types/typeorm.d.ts'
       ]
     }
   },
   mysql: {
     files: {
       base: [
-        'databases/mysql/config/database.ts.template',
-        'databases/mysql/models/base.model.ts.template',
-        'databases/mysql/models/user.model.ts.template',
-        'databases/mysql/repositories/base.repository.ts.template',
-        'databases/mysql/repositories/user.repository.ts.template',
-        'databases/mysql/migrations/001_init.sql.template'
+        'src/config/database.ts',
+        'src/models/base.model.ts',
+        'src/models/user.model.ts',
+        'src/repositories/base.repository.ts',
+        'src/repositories/user.repository.ts',
+        'src/migrations/001_init.sql',
+        'src/types/typeorm.d.ts'
       ]
     }
   },
@@ -136,50 +179,59 @@ export const DATABASE_SPECIFIC: Record<Database, DatabaseConfig> = {
 
 export const AUTH_SPECIFIC: Record<Auth, string[]> = {
   jwt: [
-    'auth/jwt/middleware/auth.middleware.ts.template',
-    'auth/jwt/controllers/auth.controller.ts.template',
-    'auth/jwt/routes/auth.routes.ts.template'
+    'src/middleware/auth.middleware.ts',
+    'src/controllers/auth.controller.ts',
+    'src/services/auth.service.ts',
+    'src/routes/auth.routes.ts',
+    'src/types/jwt.d.ts',
+    'src/config/jwt.config.ts'
   ],
   oauth: [
-    'auth/oauth/middleware/auth.middleware.ts.template',
-    'auth/oauth/controllers/auth.controller.ts.template',
-    'auth/oauth/routes/auth.routes.ts.template'
+    'src/middleware/auth.middleware.ts',
+    'src/controllers/auth.controller.ts',
+    'src/services/auth.service.ts',
+    'src/routes/auth.routes.ts',
+    'src/config/oauth.config.ts',
+    'src/types/oauth.d.ts',
+    'views/auth/login.ejs'
   ],
   session: [
-    'auth/session/middleware/auth.middleware.ts.template',
-    'auth/session/middleware/validation.middleware.ts.template',
-    'auth/session/middleware/session.middleware.ts.template',
-    'auth/session/controllers/auth.controller.ts.template',
-    'auth/session/routes/auth.routes.ts.template',
-    'auth/session/config/session.config.ts.template'
+    'src/middleware/auth.middleware.ts',
+    'src/middleware/session.middleware.ts',
+    'src/controllers/auth.controller.ts',
+    'src/services/auth.service.ts',
+    'src/routes/auth.routes.ts',
+    'src/config/session.config.ts',
+    'src/types/session.d.ts'
   ],
   skip: []
 };
 
 export const CI_SPECIFIC: Record<CI, string[]> = {
   github: [
-    'ci/github/.github/workflows/ci.yml.template',
-    'ci/github/.github/workflows/mongodb.yml.template',
-    'ci/github/.github/workflows/postgres.yml.template',
-    'ci/github/.github/workflows/mysql.yml.template',
+    '.github/workflows/ci.yml',
+    '.github/workflows/cd.yml',
+    '.github/workflows/mongodb-pipeline.yml',
+    '.github/workflows/postgres-pipeline.yml',
+    '.github/workflows/mysql-pipeline.yml'
   ],
   gitlab: [
-    'ci/gitlab/.gitlab-ci.yml.template',
-    'ci/gitlab/mongodb-ci.yml.template',
-    'ci/gitlab/postgres-ci.yml.template',
-    'ci/gitlab/mysql-ci.yml.template',
+    '.gitlab-ci.yml',
+    'ci/mongodb-pipeline.yml',
+    'ci/postgres-pipeline.yml',
+    'ci/mysql-pipeline.yml'
   ],
   jenkins: [
-    'ci/jenkins/Jenkinsfile.template',
-    'ci/jenkins/mongodb-pipeline.groovy.template',
-    'ci/jenkins/postgres-pipeline.groovy.template',
-    'ci/jenkins/mysql-pipeline.groovy.template',
+    'Jenkinsfile',
+    'ci/mongodb-pipeline.groovy',
+    'ci/postgres-pipeline.groovy',
+    'ci/mysql-pipeline.groovy'
   ],
   bitbucket: [
-    'ci/bitbucket/bitbucket-pipelines.yml.template',
-    'ci/bitbucket/mongodb-pipeline.yml.template',
-    'ci/bitbucket/postgres-pipeline.yml.template',
-    'ci/bitbucket/mysql-pipeline.yml.template',
+    'bitbucket-pipelines.yml',
+    'ci/mongodb-pipeline.yml',
+    'ci/postgres-pipeline.yml',
+    'ci/mysql-pipeline.yml'
   ],
   skip: []
 };
@@ -205,17 +257,17 @@ export function getRequiredFiles(options: ExternalTemplateOptions): string[] {
 
   // Add auth-specific files
   if (options.auth && options.auth !== 'skip') {
-    const authConfig = AUTH_SPECIFIC[options.auth];
-    if (authConfig) {
-      files = [...files, ...authConfig];
+    const authFiles = AUTH_SPECIFIC[options.auth];
+    if (authFiles) {
+      files = [...files, ...authFiles];
     }
   }
 
   // Add CI-specific files
   if (options.ci && options.ci !== 'skip') {
-    const ciConfig = CI_SPECIFIC[options.ci];
-    if (ciConfig) {
-      files = [...files, ...ciConfig];
+    const ciFiles = CI_SPECIFIC[options.ci];
+    if (ciFiles) {
+      files = [...files, ...ciFiles];
     }
   }
 
@@ -223,7 +275,6 @@ export function getRequiredFiles(options: ExternalTemplateOptions): string[] {
 }
 
 export function createDirectoryStructure(options: ExternalTemplateOptions): void {
-  // Create base directories
   const baseDirectories = [
     'src',
     'src/config',
@@ -232,6 +283,10 @@ export function createDirectoryStructure(options: ExternalTemplateOptions): void
     'src/services',
     'src/utils',
     'src/middleware',
+    'src/models',
+    'src/repositories',
+    'src/types',
+    'src/types/express',
     'src/__tests__',
     'src/__tests__/unit',
     'src/__tests__/integration'
@@ -241,11 +296,12 @@ export function createDirectoryStructure(options: ExternalTemplateOptions): void
   if (options.framework === 'nestjs') {
     baseDirectories.push(
       'src/modules',
-      'src/decorators',
-      'src/filters',
-      'src/guards',
-      'src/interceptors',
-      'src/pipes'
+      'src/common',
+      'src/common/filters',
+      'src/common/guards',
+      'src/common/interceptors',
+      'src/common/decorators',
+      'src/modules/health'
     );
   } else if (options.framework === 'fastify') {
     baseDirectories.push(
@@ -257,9 +313,26 @@ export function createDirectoryStructure(options: ExternalTemplateOptions): void
   // Add database-specific directories
   if (options.database && options.database !== 'skip') {
     baseDirectories.push(
-      'src/models',
-      'src/repositories'
+      'src/migrations'
     );
+  }
+
+  // Add auth-specific directories
+  if (options.auth === 'oauth') {
+    baseDirectories.push(
+      'views',
+      'views/auth'
+    );
+  }
+
+  // Add CI-specific directories
+  if (options.ci === 'github') {
+    baseDirectories.push(
+      '.github',
+      '.github/workflows'
+    );
+  } else if (options.ci !== 'skip') {
+    baseDirectories.push('ci');
   }
 
   // Create directories

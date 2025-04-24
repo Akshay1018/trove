@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { TemplateFile } from '../types/template';
-import ejs from 'ejs';
+import * as ejs from 'ejs';
 
 export class TemplateLoader {
   private readonly basePath: string;
@@ -19,13 +19,35 @@ export class TemplateLoader {
       let target = source;
 
       // Transform template paths to target paths
-      if (source.includes('/auth/')) {
+      if (source.includes('/frameworks/')) {
         target = source
-          .replace('/auth/', '/src/')
+          .replace('/frameworks/express/src/', '/src/')
+          .replace('/frameworks/koa/src/', '/src/')
+          .replace('/frameworks/nestjs/src/', '/src/')
+          .replace('/frameworks/fastify/src/', '/src/')
           .replace('.template', '');
-      } else if (source.includes('/middleware/')) {
+      } else if (source.includes('/databases/')) {
         target = source
-          .replace('/middleware/', '/src/middleware/')
+          .replace('/databases/mongodb/', '/src/')
+          .replace('/databases/postgres/', '/src/')
+          .replace('/databases/mysql/', '/src/')
+          .replace('.template', '');
+      } else if (source.includes('/auth/')) {
+        target = source
+          .replace('/auth/jwt/', '/src/')
+          .replace('/auth/session/', '/src/')
+          .replace('/auth/oauth/', '/src/')
+          .replace('.template', '');
+      } else if (source.includes('/ci/')) {
+        target = source
+          .replace('/ci/github/', '/')
+          .replace('/ci/gitlab/', '/')
+          .replace('/ci/bitbucket/', '/')
+          .replace('/ci/jenkins/', '/')
+          .replace('.template', '');
+      } else if (source.includes('/common/base/')) {
+        target = source
+          .replace('/common/base/', '/')
           .replace('.template', '');
       } else {
         target = source.replace('.template', '');
@@ -42,7 +64,7 @@ export class TemplateLoader {
       const res = join(dir, dirent.name);
       if (dirent.isDirectory()) {
         files.push(...this.getFilesRecursively(res));
-      } else {
+      } else if (dirent.name.endsWith('.template')) {
         files.push(res);
       }
     });

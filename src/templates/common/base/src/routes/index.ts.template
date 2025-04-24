@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { healthRouter } from './health.routes';
+import { authRouter } from './auth.routes';
+
+const router = Router();
+
+// Health check routes
+router.use('/health', healthRouter);
+
+// Auth routes
+router.use('/auth', authRouter);
+
+export default router; 

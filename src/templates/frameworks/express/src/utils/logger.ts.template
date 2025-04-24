@@ -1,0 +1,60 @@
+import winston from 'winston';
+import { config } from '../config';
+
+const { combine, timestamp, printf, colorize } = winston.format;
+
+const logFormat = printf(({ level, message, timestamp, context, ...meta }) => {
+  const metaString = Object.keys(meta).length ? JSON.stringify(meta) : '';
+  return `${timestamp} [${level}] ${context ? `[${context}] ` : ''}${message} ${metaString}`;
+});
+
+export class Logger {
+  private logger: winston.Logger;
+  private context: string;
+
+  constructor(context?: string) {
+    this.context = context || '';
+    this.logger = winston.createLogger({
+      level: config.logLevel || 'info',
+      format: combine(
+        timestamp(),
+        config.isDevelopment ? colorize() : winston.format.uncolorize(),
+        logFormat
+      ),
+      transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({
+          filename: 'logs/error.log',
+          level: 'error',
+        }),
+        new winston.transports.File({
+          filename: 'logs/combined.log',
+        }),
+      ],
+    });
+  }
+
+  private formatMessage(message: string, ...meta: unknown[]): string {
+    return meta.length ? `${message} ${meta.map(m => JSON.stringify(m)).join(' ')}` : message;
+  }
+
+  info(message: string, ...meta: unknown[]): void {
+    this.logger.info(this.formatMessage(message, ...meta), { context: this.context });
+  }
+
+  error(message: string, ...meta: unknown[]): void {
+    this.logger.error(this.formatMessage(message, ...meta), { context: this.context });
+  }
+
+  warn(message: string, ...meta: unknown[]): void {
+    this.logger.warn(this.formatMessage(message, ...meta), { context: this.context });
+  }
+
+  debug(message: string, ...meta: unknown[]): void {
+    this.logger.debug(this.formatMessage(message, ...meta), { context: this.context });
+  }
+
+  verbose(message: string, ...meta: unknown[]): void {
+    this.logger.verbose(this.formatMessage(message, ...meta), { context: this.context });
+  }
+} 

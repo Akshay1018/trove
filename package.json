@@ -1,18 +1,18 @@
 {
   "name": "create-node-backend-temp",
   "version": "1.0.0",
-  "description": "A powerful and flexible CLI tool for creating modern Node.js backend applications with best practices and CI/CD pipelines baked in",
-  "main": "dist/src/cli.js",
+  "description": "A CLI tool for creating modern Node.js backend applications",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
     "create-node-backend-temp": "./dist/cli.js"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc --noEmit false && cp -r src/templates/* dist/src/templates/",
-    "verify-templates": "ts-node scripts/verify-templates.ts",
+    "build": "rm -rf dist && mkdir -p dist/templates && tsc --noEmit false && cp -r src/templates/* dist/templates/",
+    "verify-templates": "ts-node -P tsconfig.json scripts/verify-templates.ts",
     "watch": "tsc -w",
     "dev": "ts-node src/cli.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint . --ext .ts",
@@ -24,36 +24,13 @@
     "postversion": "git push && git push --tags"
   },
   "keywords": [
-    "cli",
-    "nodejs",
+    "node",
     "backend",
-    "express",
-    "koa",
-    "nestjs",
-    "fastify",
-    "typescript",
-    "generator",
-    "boilerplate",
-    "scaffold",
-    "template",
-    "ci-cd",
-    "github-actions",
-    "gitlab-ci",
-    "bitbucket-pipelines",
-    "docker",
-    "mongodb",
-    "postgresql",
-    "mysql",
-    "authentication",
-    "jwt",
-    "oauth"
+    "cli",
+    "generator"
   ],
-  "author": {
-    "name": "Akshay Kumar",
-    "email": "ak715173@gmail.com",
-    "url": "https://github.com/Akshay1018"
-  },
-  "license": "ISC",
+  "author": "",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Akshay1018/trove.git"

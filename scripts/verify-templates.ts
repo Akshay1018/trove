@@ -1,79 +1,102 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs-extra';
+import * as path from 'path';
+import { TEMPLATES_DIR } from '../src/config/constants';
 import {
   Framework,
-  Auth,
-  CI,
   Database,
+  CI,
   FRAMEWORK_SPECIFIC,
   DATABASE_SPECIFIC,
   AUTH_SPECIFIC,
   CI_SPECIFIC,
+  BASE_STRUCTURE
 } from '../src/templates/structure';
 
-const TEMPLATES_DIR = path.join(__dirname, '../src/templates');
-
-function ensureDirectoryExists(dir: string) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+async function ensureTemplateFile(templatePath: string) {
+  const fullPath = path.join(TEMPLATES_DIR, templatePath);
+  
+  if (!fs.existsSync(fullPath)) {
+    await fs.ensureDir(path.dirname(fullPath));
+    await fs.writeFile(fullPath, '// Template content will be added here\n');
+    console.log(`Created empty template: ${templatePath}`);
   }
 }
 
-function createEmptyTemplateFile(filePath: string) {
-  const dir = path.dirname(filePath);
-  ensureDirectoryExists(dir);
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, '// TODO: Implement template\n');
-    console.log(`Created empty template: ${filePath}`);
+async function verifyBaseTemplates() {
+  console.log('Verifying base templates...');
+  for (const file of [...BASE_STRUCTURE.files.base, ...BASE_STRUCTURE.files.src]) {
+    await ensureTemplateFile(file);
   }
 }
 
-function verifyFrameworkTemplates() {
-  Object.entries(FRAMEWORK_SPECIFIC).forEach(([framework, config]) => {
-    config.files.base.forEach(file => {
-      const templatePath = path.join(TEMPLATES_DIR, file);
-      createEmptyTemplateFile(templatePath);
-    });
-  });
+async function verifyFrameworkTemplates() {
+  console.log('Verifying framework templates...');
+  const frameworks: Framework[] = ['express', 'koa', 'fastify', 'nestjs'];
+  
+  for (const framework of frameworks) {
+    const config = FRAMEWORK_SPECIFIC[framework];
+    if (config) {
+      for (const file of config.files.base) {
+        await ensureTemplateFile(file);
+      }
+    }
+  }
 }
 
-function verifyDatabaseTemplates() {
-  Object.entries(DATABASE_SPECIFIC).forEach(([database, config]) => {
-    config.files.base.forEach(file => {
-      const templatePath = path.join(TEMPLATES_DIR, file);
-      createEmptyTemplateFile(templatePath);
-    });
-  });
+async function verifyDatabaseTemplates() {
+  console.log('Verifying database templates...');
+  const databases: Database[] = ['mongodb', 'postgres', 'mysql'];
+  
+  for (const db of databases) {
+    const config = DATABASE_SPECIFIC[db];
+    if (config) {
+      for (const file of config.files.base) {
+        await ensureTemplateFile(file);
+      }
+    }
+  }
 }
 
-function verifyAuthTemplates() {
-  Object.entries(AUTH_SPECIFIC).forEach(([auth, files]) => {
-    files.forEach(file => {
-      const templatePath = path.join(TEMPLATES_DIR, file);
-      createEmptyTemplateFile(templatePath);
-    });
-  });
+async function verifyAuthTemplates() {
+  console.log('Verifying auth templates...');
+  const authTypes = ['jwt', 'oauth', 'session'];
+  
+  for (const auth of authTypes) {
+    const files = AUTH_SPECIFIC[auth];
+    if (files) {
+      for (const file of files) {
+        await ensureTemplateFile(file);
+      }
+    }
+  }
 }
 
-function verifyCITemplates() {
-  Object.entries(CI_SPECIFIC).forEach(([ci, files]) => {
-    files.forEach(file => {
-      const templatePath = path.join(TEMPLATES_DIR, file);
-      createEmptyTemplateFile(templatePath);
-    });
-  });
+async function verifyCITemplates() {
+  console.log('Verifying CI templates...');
+  const ciTypes: CI[] = ['github', 'gitlab', 'jenkins', 'bitbucket'];
+  
+  for (const ci of ciTypes) {
+    const files = CI_SPECIFIC[ci];
+    if (files) {
+      for (const file of files) {
+        await ensureTemplateFile(file);
+      }
+    }
+  }
 }
 
-console.log('Verifying framework templates...');
-verifyFrameworkTemplates();
+async function main() {
+  try {
+    await verifyBaseTemplates();
+    await verifyFrameworkTemplates();
+    await verifyDatabaseTemplates();
+    await verifyAuthTemplates();
+    await verifyCITemplates();
+    console.log('Template verification complete!');
+  } catch (error) {
+    console.error('Error verifying templates:', error);
+    process.exit(1);
+  }
+}
 
-console.log('Verifying database templates...');
-verifyDatabaseTemplates();
-
-console.log('Verifying auth templates...');
-verifyAuthTemplates();
-
-console.log('Verifying CI templates...');
-verifyCITemplates();
-
-console.log('Template verification complete!'); 
+main(); 

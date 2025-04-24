@@ -1,4 +1,4 @@
-import express, { Application } from 'express';
+import express, { Express } from 'express';
 import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -8,65 +8,45 @@ import { errorHandler } from './middleware/error.middleware';
 import routes from './routes';
 import { initializeDatabase } from './config/database';
 import { configureSession } from './middleware/auth.middleware';
+import session from 'express-session';
+import passport from 'passport';
+import './config/oauth.config';
 
-class App {
-  public app: Application;
+const app: Express = express();
 
-  constructor() {
-    this.app = express();
-    this.initializeMiddlewares();
-    this.initializeAuth();
-    this.initializeRoutes();
-    this.initializeErrorHandling();
-  }
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+}));
+app.use(compression());
+app.use(morgan('dev'));
 
-  private initializeMiddlewares(): void {
-    // Set view engine for OAuth templates
-    this.app.set('views', path.join(process.cwd(), 'views'));
-    this.app.set('view engine', 'ejs');
-    
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
-    this.app.use(cors());
-    this.app.use(helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-        },
-      },
-    }));
-    this.app.use(compression());
-    this.app.use(morgan('dev'));
-  }
+// Session and Passport setup for OAuth
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
-  private initializeAuth(): void {
-    // Initialize session and passport
-    if (typeof configureSession === 'function') {
-      configureSession(this.app);
-    }
-  }
+// Set view engine for OAuth templates
+app.set('views', path.join(process.cwd(), 'views'));
+app.set('view engine', 'ejs');
 
-  private initializeRoutes(): void {
-    this.app.use('/api', routes);
-  }
+// Routes
+app.use('/api', routes);
 
-  private initializeErrorHandling(): void {
-    this.app.use(errorHandler);
-  }
+// Error handling
+app.use(errorHandler);
 
-  public async start(port: number): Promise<void> {
-    try {
-      await initializeDatabase();
-      this.app.listen(port, () => {
-        console.log(`🚀 Server running on port ${port}`);
-      });
-    } catch (error) {
-      console.error('Failed to start server:', error);
-      process.exit(1);
-    }
-  }
-}
-
-export default App; 
+export { app }; 

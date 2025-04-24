@@ -1,27 +1,61 @@
-import { DataSource } from 'typeorm';
+import mysql from 'mysql2/promise';
 import { config } from './index';
+import { logger } from '../utils/logger';
 
-export const AppDataSource = new DataSource({
-  type: 'mysql',
-  host: config.mysql.host,
-  port: config.mysql.port,
-  username: config.mysql.username,
-  password: config.mysql.password,
-  database: config.mysql.database,
-  synchronize: process.env.NODE_ENV === 'development',
-  logging: process.env.NODE_ENV === 'development',
-  entities: ['src/entities/**/*.ts'],
-  migrations: ['src/migrations/**/*.ts'],
-  subscribers: ['src/subscribers/**/*.ts'],
-  charset: config.mysql.charset,
+const pool = mysql.createPool({
+  uri: config.database.url,
+  ...config.database.options,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-export async function initializeDatabase(): Promise<void> {
+pool.on('connection', () => {
+  logger.info('MySQL Connected');
+});
+
+pool.on('error', (err) => {
+  logger.error('Unexpected error on idle client', err);
+  process.exit(1);
+});
+
+export const query = async (sql: string, params?: any[]): Promise<any> => {
+  const start = Date.now();
   try {
-    await AppDataSource.initialize();
-    console.log('Database connection initialized');
+    const [results] = await pool.execute(sql, params);
+    const duration = Date.now() - start;
+    logger.debug('Executed query', { sql, duration });
+    return results;
   } catch (error) {
-    console.error('Error initializing database connection:', error);
+    logger.error('Error executing query', { sql, error });
     throw error;
   }
-} 
+};
+
+export const getConnection = async () => {
+  const connection = await pool.getConnection();
+  const query = connection.query.bind(connection);
+  const release = connection.release.bind(connection);
+
+  // Monkey patch the query method to add logging
+  connection.query = (...args: any[]) => {
+    const start = Date.now();
+    return query(...args).then((result: any) => {
+      const duration = Date.now() - start;
+      logger.debug('Executed query', { sql: args[0], duration });
+      return result;
+    });
+  };
+
+  return connection;
+};
+
+export const closePool = async (): Promise<void> => {
+  try {
+    await pool.end();
+    logger.info('Database pool closed');
+  } catch (error) {
+    logger.error('Error closing database pool:', error);
+    throw error;
+  }
+}; 
