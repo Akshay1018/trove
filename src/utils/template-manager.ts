@@ -142,11 +142,13 @@ export class TemplateManager {
           const originalCiFilename = basename(templateRelativePath).replace(/\.template$/, '');
           let skipFile = false;
 
-          if (originalCiFilename === 'mongodb.yml' && selectedDatabase !== 'mongodb') {
+          // Apply filter regardless of ciType first
+          if (originalCiFilename.includes('mongodb') && !originalCiFilename.includes('.gitlab') && selectedDatabase !== 'mongodb') {
+              // Handles mongodb.yml, mongodb-ci.yml etc. Excludes .gitlab-ci.yml
               skipFile = true;
-          } else if (originalCiFilename === 'postgres.yml' && selectedDatabase !== 'postgres') {
+          } else if (originalCiFilename.includes('postgres') && !originalCiFilename.includes('.gitlab') && selectedDatabase !== 'postgres') {
               skipFile = true;
-          } else if (originalCiFilename === 'mysql.yml' && selectedDatabase !== 'mysql') {
+          } else if (originalCiFilename.includes('mysql') && !originalCiFilename.includes('.gitlab') && selectedDatabase !== 'mysql') {
               skipFile = true;
           }
           // Add more database checks if needed
