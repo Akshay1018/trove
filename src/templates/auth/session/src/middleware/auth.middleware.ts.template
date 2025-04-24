@@ -1,105 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
-import { config } from '../config';
-import { logger } from '../utils/logger';
-import { User } from '../models/user.model';
-import bcrypt from 'bcryptjs';
-import { UnauthorizedError, BadRequestError } from '../utils/errors';
-import { AuthService } from '../services/auth.service';
-import { UserService } from '../services/user.service';
+import { AppError } from '../utils/error';
 
-const authService = new AuthService(new UserService());
-
-export const login = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await authService.login(email, password, req.session);
-
-    // Set additional session data
-    req.session.createdAt = Date.now();
-    req.session.lastActive = Date.now();
-
-    logger.info(`User logged in: ${user.email}`);
-    res.json({ 
-      message: 'Login successful',
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name
-      }
-    });
-  } catch (error) {
-    next(error);
+declare module 'express-session' {
+  interface SessionData {
+    userId: string;
   }
-};
+}
 
-export const logout = async (req: Request, res: Response, next: NextFunction) => {
+export const isAuthenticated = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    await authService.logout(req.session);
-    res.clearCookie('sessionId');
-    res.json({ message: 'Logged out successfully' });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Middleware to check if user is authenticated
- */
-export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.session?.userId) {
-      throw new UnauthorizedError('Authentication required');
-    }
-
-    const user = await authService.verifySession(req.session);
-    req.user = {
-      id: user._id.toString(),
-      email: user.email,
-      name: user.name,
-    };
-
-    next();
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Middleware to check if user is NOT authenticated
- */
-export const isNotAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-  if (req.session?.userId) {
-    return next(new UnauthorizedError('Already authenticated'));
-  }
-  next();
-};
-
-/**
- * Middleware to attach current user to request if session exists
- */
-export const attachUser = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (req.session?.userId) {
-      const user = await authService.getCurrentUser(req.session.userId);
-      req.user = {
-        id: user._id.toString(),
-        email: user.email,
-        name: user.name,
-      };
+    if (!req.session.userId) {
+      throw new AppError('Please log in to access this resource', 401);
     }
     next();
   } catch (error) {
     next(error);
   }
-};
-
-/**
- * Middleware to refresh session on activity
- */
-export const refreshSession = (req: Request, res: Response, next: NextFunction) => {
-  if (req.session?.userId) {
-    req.session.touch();
-  }
-  next();
 }; 

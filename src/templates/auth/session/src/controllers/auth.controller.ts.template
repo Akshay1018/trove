@@ -1,148 +1,111 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/user.model';
-import { UserService } from '../services/user.service';
-import { logger } from '../utils/logger';
-import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
-import { validatePassword } from '../utils/auth';
-import { SessionData } from 'express-session';
+import { AppError } from '../utils/error';
 
-interface CustomSessionData extends SessionData {
-  userId?: string;
-  email?: string;
-}
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password, firstName, lastName } = req.body;
 
-export class AuthController {
-  constructor(private userService: UserService) {}
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new AppError('Email already exists', 400);
+    }
 
-  /**
-   * Register a new user
-   */
-  public register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const { email, password, name } = req.body;
+    const user = await User.create({
+      email,
+      password,
+      firstName,
+      lastName,
+    });
 
-      if (!email || !password) {
-        throw new BadRequestError('Email and password are required');
-      }
+    // Start session
+    req.session.userId = user.id;
 
-      const existingUser = await this.userService.findByEmail(email);
-      if (existingUser) {
-        throw new BadRequestError('User already exists');
-      }
-
-      const user = await this.userService.create({
-        email,
-        password,
-        name,
-      });
-
-      // Start session
-      (req.session as CustomSessionData).userId = user._id.toString();
-      (req.session as CustomSessionData).email = user.email;
-
-      res.status(201).json({
-        success: true,
-        data: {
-          user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-          },
+    res.status(201).json({
+      status: 'success',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
         },
-      });
-    } catch (error) {
-      next(error);
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user || !(await user.validatePassword(password))) {
+      throw new AppError('Invalid email or password', 401);
     }
-  };
 
-  /**
-   * Login user
-   */
-  public login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const { email, password } = req.body;
+    // Start session
+    req.session.userId = user.id;
 
-      if (!email || !password) {
-        throw new BadRequestError('Email and password are required');
-      }
-
-      const user = await this.userService.findByEmail(email);
-      if (!user) {
-        throw new NotFoundError('User not found');
-      }
-
-      const isPasswordValid = await validatePassword(password, user.password);
-      if (!isPasswordValid) {
-        throw new UnauthorizedError('Invalid credentials');
-      }
-
-      // Start session
-      (req.session as CustomSessionData).userId = user._id.toString();
-      (req.session as CustomSessionData).email = user.email;
-
-      res.status(200).json({
-        success: true,
-        data: {
-          user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-          },
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
         },
-      });
-    } catch (error) {
-      next(error);
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = (req: Request, res: Response) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
     }
-  };
+    res.clearCookie('connect.sid');
+    res.status(200).json({ status: 'success' });
+  });
+};
 
-  /**
-   * Logout user
-   */
-  public logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      req.session.destroy((err) => {
-        if (err) {
-          logger.error('Error destroying session:', err);
-          throw new Error('Could not log out');
-        }
-        res.clearCookie('connect.sid');
-        res.status(200).json({
-          success: true,
-          message: 'Logged out successfully',
-        });
-      });
-    } catch (error) {
-      next(error);
+export const getMe = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      throw new AppError('User not found', 404);
     }
-  };
 
-  /**
-   * Get current session user
-   */
-  public getCurrentUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const userId = (req.session as CustomSessionData).userId;
-      if (!userId) {
-        throw new UnauthorizedError('Not authenticated');
-      }
-
-      const user = await this.userService.findById(userId);
-      if (!user) {
-        throw new NotFoundError('User not found');
-      }
-
-      res.status(200).json({
-        success: true,
-        data: {
-          user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-          },
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
         },
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-}
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}; 
