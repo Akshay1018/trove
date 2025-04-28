@@ -1,17 +1,55 @@
-
 image: node:20.11.1
 
 definitions:
   caches:
     npm: ~/.npm
+  services: 
+    mysql:
+      image: mysql:8.0
+      variables:
+        MYSQL_ROOT_PASSWORD: root
+        MYSQL_DATABASE: test_db
+    mongo:
+      image: mongo:6.0
+    postgres:
+      image: postgres:15
+      variables:
+        POSTGRES_USER: testuser
+        POSTGRES_PASSWORD: testpassword
+        POSTGRES_DB: test_db
   steps:
     - step: &build-test
         name: Build and Test
         caches:
           - npm
+        services:
+          <% if (database === 'mysql') { %>
+          - mysql
+          <% } else if (database === 'mongodb') { %>
+          - mongo
+          <% } else if (database === 'postgres') { %>
+          - postgres
+          <% } %>
         script:
-          - npm ci
+          - npm ci --cache .npm --prefer-offline
           - npm run lint
+          - export NODE_ENV=test
+          <% if (database === 'mongodb') { %>
+          - export MONGODB_URI=mongodb://localhost:27017/test_db
+          <% } else if (database === 'mysql') { %>
+          - export DB_HOST=localhost
+          - export DB_PORT=3306
+          - export DB_USERNAME=root
+          - export DB_PASSWORD=root
+          - export DB_DATABASE=test_db
+          <% } else if (database === 'postgres') { %>
+          - export DB_HOST=localhost
+          - export DB_PORT=5432
+          - export DB_USERNAME=testuser
+          - export DB_PASSWORD=testpassword
+          - export DB_DATABASE=test_db
+          <% } %>
+          - echo "Running tests with database: <%= database %>"
           - npm run test
           - npm run build
         artifacts:
@@ -21,21 +59,15 @@ definitions:
         deployment: staging
         trigger: manual
         script:
-          - pipe: atlassian/heroku-deploy:2.1.1
-            variables:
-              HEROKU_API_KEY: $HEROKU_API_KEY
-              HEROKU_APP_NAME: $HEROKU_STAGING_APP
-              ZIP_FILE: "dist.tar.gz"
+          - echo "Deploying to staging... (replace with actual commands)"
+          - echo "Need to prepare deployment artifact if not done in build step (e.g., tar -czf dist.tar.gz dist)"
     - step: &deploy-production
         name: Deploy to Production
         deployment: production
         trigger: manual
         script:
-          - pipe: atlassian/heroku-deploy:2.1.1
-            variables:
-              HEROKU_API_KEY: $HEROKU_API_KEY
-              HEROKU_APP_NAME: $HEROKU_PRODUCTION_APP
-              ZIP_FILE: "dist.tar.gz"
+          - echo "Deploying to production... (replace with actual commands)"
+          - echo "Need to prepare deployment artifact if not done in build step (e.g., tar -czf dist.tar.gz dist)"
 
 pipelines:
   default:
@@ -43,7 +75,6 @@ pipelines:
   branches:
     main:
       - step: *build-test
-      - step: *deploy-staging
       - step: *deploy-production
     develop:
       - step: *build-test
@@ -58,22 +89,6 @@ pipelines:
       - step: *build-test
       - step: *deploy-production
 
-  custom:
-    sonar:
-      - step:
-          name: SonarQube Analysis
-          script:
-            - pipe: sonarsource/sonarqube-scan:1.0.0
-              variables:
-                SONAR_HOST_URL: $SONAR_HOST_URL
-                SONAR_TOKEN: $SONAR_TOKEN
-    security:
-      - step:
-          name: Security Scan
-          script:
-            - npm audit
-            - npx snyk test
-            
 options:
   max-time: 30
   size: 2x

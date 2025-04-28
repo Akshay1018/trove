@@ -1,0 +1,182 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      <% if (database === 'mongodb') { %>
+      mongodb:
+        image: mongo:6.0 # Use a specific version for stability
+        ports:
+          - 27017:27017
+        # Options to ensure the service is ready before tests run
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({serverStatus:1})' --quiet" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 3
+      <% } else if (database === 'mysql') { %>
+      mysql:
+        image: mysql:8.0 # Use a specific version for stability
+        env:
+          MYSQL_ROOT_PASSWORD: root # Default password for testing
+          MYSQL_DATABASE: test_db # Default database name for testing
+        ports:
+          - 3306:3306
+        # Options to ensure the service is ready before tests run
+        options: >-
+          --health-cmd="mysqladmin ping --silent" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=3 
+      <% } else if (database === 'postgres') { %>
+      postgres:
+        image: postgres:15 # Use a specific version for stability
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: test_db # Use consistent test_db name
+        ports:
+          - 5432:5432
+        # Options to ensure the service is ready before tests run
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      <% } %>
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linter
+      run: npm run lint
+    
+    - name: Run tests
+      run: npm test
+      env:
+        NODE_ENV: test
+        <% if (database === 'mongodb') { %>
+        MONGODB_URI: mongodb://localhost:27017/test_db # Use consistent test_db name
+        <% } else if (database === 'mysql') { %>
+        # For TypeORM/MySQL (adjust if your app uses DATABASE_URL directly)
+        DB_HOST: localhost
+        DB_PORT: 3306
+        DB_USERNAME: root
+        DB_PASSWORD: root
+        DB_DATABASE: test_db
+        <% } else if (database === 'postgres') { %>
+        # For TypeORM/PostgreSQL (adjust if your app uses DATABASE_URL directly)
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USERNAME: testuser
+        DB_PASSWORD: testpassword
+        DB_DATABASE: test_db
+        <% } %>
+        # Add common secrets needed for tests (ensure they are set in GitHub Secrets)
+        JWT_SECRET: ${{ secrets.JWT_SECRET || 'default-test-secret' }} 
+        # Add other necessary test environment variables here
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build
+      run: npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: dist/
+
+  # Optional security scan job (Example using Snyk)
+  # security:
+  #   needs: build # Run after build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Use Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20.x'
+  #         cache: 'npm'
+  #     - name: Install dependencies
+  #       run: npm ci
+  #     - name: Run Snyk to check for vulnerabilities
+  #       uses: snyk/actions/node@master
+  #       continue-on-error: true # To allow reporting without failing the build
+  #       env:
+  #         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #       with:
+  #         command: test
+  #         args: --severity-threshold=high
+
+  # Optional deployment jobs (Example structure)
+  # deploy-staging:
+  #   needs: build # Or 'security' if you add that job
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/develop' # Example trigger
+  #   environment:
+  #     name: staging
+  #     url: ${{ secrets.STAGING_URL }} # Example environment URL
+  #   steps:
+  #   - name: Download build artifacts
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       name: dist
+  #       path: dist/
+  #   # Add your staging deployment steps here (e.g., scp, ssh, cloud provider CLI)
+  #   - name: Deploy to staging
+  #     run: echo "Deploying to staging..."
+
+  # deploy-production:
+  #   needs: build # Or 'security' or 'deploy-staging'
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Example trigger
+  #   environment:
+  #     name: production
+  #     url: ${{ secrets.PRODUCTION_URL }} # Example environment URL
+  #   steps:
+  #   - name: Download build artifacts
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       name: dist
+  #       path: dist/
+  #   # Add your production deployment steps here
+  #   - name: Deploy to production
+  #     run: echo "Deploying to production..." 

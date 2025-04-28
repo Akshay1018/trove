@@ -1,59 +1,104 @@
-image: node:18
+image: node:20
 
 stages:
+  - install
   - test
   - build
   - deploy
 
 variables:
   NODE_ENV: test
+  <% if (database === 'mongodb') { %>
+  MONGODB_URI: mongodb://mongo:27017/test_db
+  <% } else if (database === 'mysql') { %>
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_USERNAME: root
+  DB_PASSWORD: root
+  DB_DATABASE: test_db
+  <% } else if (database === 'postgres') { %>
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_USERNAME: testuser
+  DB_PASSWORD: testpassword
+  DB_DATABASE: test_db
+  <% } %>
+  <% if (database === 'mongodb') { %>
+  - name: mongo:6.0
+    alias: mongo
+  <% } else if (database === 'mysql') { %>
+  - name: mysql:8.0
+    alias: mysql
+  <% } else if (database === 'postgres') { %>
+  - name: postgres:15
+    alias: postgres
+  <% } %>
 
 cache:
+  key: ${CI_COMMIT_REF_SLUG}
   paths:
     - node_modules/
 
 install_dependencies:
-  stage: .pre
+  stage: install
   script:
-    - npm ci
+    - npm ci --cache .npm --prefer-offline
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
 
 lint:
   stage: test
+  needs: [install_dependencies]
   script:
     - npm run lint
 
 test:
   stage: test
+  needs: [install_dependencies]
   services:
-    - mongo:latest
-  variables:
-    MONGODB_URI: mongodb://mongo:27017/<%= projectName %>_test
+    <% if (database === 'mongodb') { %>
+    - name: mongo:6.0
+      alias: mongo
+    <% } else if (database === 'mysql') { %>
+    - name: mysql:8.0
+      alias: mysql
+    <% } else if (database === 'postgres') { %>
+    - name: postgres:15
+      alias: postgres
+    <% } %>
   script:
+    - echo "Running tests with NODE_ENV=$NODE_ENV and database variables..."
     - npm run test
 
 build:
   stage: build
+  needs: [install_dependencies]
   script:
     - npm run build
   artifacts:
     paths:
       - dist/
+    expire_in: 1 week
 
 deploy_staging:
   stage: deploy
+  needs: [build]
   script:
     - echo "Deploy to staging server"
   environment:
     name: staging
-  only:
-    - develop
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 deploy_production:
   stage: deploy
+  needs: [build]
   script:
     - echo "Deploy to production server"
   environment:
     name: production
-  only:
-    - main
-  when: manual 
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual 

@@ -1,3 +1,9 @@
+# GitLab CI Service Definition for MongoDB
+# Defines the MongoDB service to be used in CI jobs.
+mongo:
+  name: mongo:6.0 # Specify MongoDB version using 'name' which includes the image
+  alias: mongo # Service alias, used in connection string
+
 services:
   - mongo:latest
 
