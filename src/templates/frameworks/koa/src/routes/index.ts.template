@@ -1,1 +1,10 @@
-// TODO: Implement template
+import Router from 'koa-router';
+import authRoutes from './auth.routes';
+import healthRoutes from './health.routes';
+
+const router = new Router();
+
+router.use('/auth', authRoutes.routes(), authRoutes.allowedMethods());
+router.use('/health', healthRoutes.routes(), healthRoutes.allowedMethods());
+
+export default router;

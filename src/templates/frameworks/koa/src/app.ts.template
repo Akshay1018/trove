@@ -1,1 +1,25 @@
-// TODO: Implement template
+import Koa from 'koa';
+import bodyParser from 'koa-bodyparser';
+import cors from '@koa/cors';
+import logger from '../utils/logger';
+import errorMiddleware from '../middleware/error.middleware';
+import router from '../routes';
+
+const app = new Koa();
+
+// Middlewares
+app.use(cors());
+app.use(bodyParser());
+app.use(errorMiddleware);
+
+// Logger (optional, can be enhanced)
+app.use(async (ctx, next) => {
+  logger.info(`${ctx.method} ${ctx.url}`);
+  await next();
+});
+
+// Routes
+app.use(router.routes());
+app.use(router.allowedMethods());
+
+export default app;
