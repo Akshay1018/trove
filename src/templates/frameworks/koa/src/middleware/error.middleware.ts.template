@@ -1,1 +1,18 @@
-// TODO: Implement template
+import { Context, Next } from 'koa';
+import logger from '../utils/logger';
+
+const errorMiddleware = async (ctx: Context, next: Next): Promise<void> => {
+  try {
+    await next();
+  } catch (err) {
+    logger.error(err);
+    ctx.status = err.status || 500;
+    ctx.body = {
+      status: 'error',
+      message: err.message || 'Internal Server Error',
+    };
+    ctx.app.emit('error', err, ctx);
+  }
+};
+
+export default errorMiddleware;
