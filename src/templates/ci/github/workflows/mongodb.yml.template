@@ -1,0 +1,12 @@
+# This file defines the MongoDB service for GitHub Actions CI
+# It is intended to be included or referenced by the main ci.yml workflow.
+mongodb:
+  image: mongo:6.0 # Use a specific version for stability
+  ports:
+    - 27017:27017
+  # Options to ensure the service is ready before tests run
+  options: >-
+    --health-cmd "mongosh --eval 'db.runCommand({serverStatus:1})' --quiet" 
+    --health-interval 10s 
+    --health-timeout 5s 
+    --health-retries 3 

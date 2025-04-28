@@ -137,19 +137,21 @@ export class TemplateManager {
         } else if (templateRelativePath.startsWith('ci/')) {
           const ciType = this.templateOptions.ci;
           const selectedDatabase = this.templateOptions.database;
+          const originalCiFilename = basename(templateRelativePath).replace(/\.template$/, '');
           
           // --- Filter database-specific CI files ---
-          const originalCiFilename = basename(templateRelativePath).replace(/\.template$/, '');
           let skipFile = false;
+          const isGitLabFile = originalCiFilename.includes('.gitlab'); // Check if it's the main GitLab file
 
-          // Apply filter regardless of ciType first
-          if (originalCiFilename.includes('mongodb') && !originalCiFilename.includes('.gitlab') && selectedDatabase !== 'mongodb') {
-              // Handles mongodb.yml, mongodb-ci.yml etc. Excludes .gitlab-ci.yml
+          // Apply filter based on selected database, *unless* it's the main .gitlab-ci.yml file
+          if (!isGitLabFile) { // Don't skip the main .gitlab-ci.yml based on DB name
+            if (originalCiFilename.includes('mongodb') && selectedDatabase !== 'mongodb') {
               skipFile = true;
-          } else if (originalCiFilename.includes('postgres') && !originalCiFilename.includes('.gitlab') && selectedDatabase !== 'postgres') {
+            } else if (originalCiFilename.includes('postgres') && selectedDatabase !== 'postgres') {
               skipFile = true;
-          } else if (originalCiFilename.includes('mysql') && !originalCiFilename.includes('.gitlab') && selectedDatabase !== 'mysql') {
+            } else if (originalCiFilename.includes('mysql') && selectedDatabase !== 'mysql') {
               skipFile = true;
+            }
           }
           // Add more database checks if needed
           
@@ -159,26 +161,23 @@ export class TemplateManager {
           }
           // --- End Filter ---
 
-          // Now calculate the final target path for files that were *not* skipped
-          targetRelativePath = templateRelativePath.replace(/^ci\/[^/]+\//, ''); // Base relative path
+          // --- Calculate Correct Target Path ---
+          const ciSourceDir = dirname(templateRelativePath); // e.g., ci/github/workflows
+          const relativePathWithinCiDir = templateRelativePath.substring(ciSourceDir.length + 1); // e.g., ci.yml.template
 
           if (ciType === 'github') {
-            // Handle .github files specifically
-            if (templateRelativePath.includes('/.github/')) {
-                 const parts = templateRelativePath.split('/.github/');
-                 if (parts.length > 1) {
-                   targetRelativePath = join('.github', parts[1]);
-                 }
-                 // Note: Files directly under .github (not in workflows) might need separate handling if they exist
-            } else {
-                 // Files directly under ci/github but not in .github need to be placed at root
-                 targetRelativePath = targetRelativePath.replace(/^workflows\//, ''); // Remove workflows prefix
-            }
-          } else if (ciType === 'gitlab' || ciType === 'bitbucket') {
-             // GitLab CI / Bitbucket files go in the root
-             // targetRelativePath is already correct (e.g., '.gitlab-ci.yml')
+            // Files go into .github/workflows/
+            targetRelativePath = join('.github', 'workflows', relativePathWithinCiDir);
+          } else if (ciType === 'gitlab') {
+            // .gitlab-ci.yml goes to root, others maybe too? (Adjust if needed)
+            targetRelativePath = relativePathWithinCiDir;
+          } else if (ciType === 'bitbucket') {
+            // bitbucket-pipelines.yml goes to root, others maybe too? (Adjust if needed)
+            targetRelativePath = relativePathWithinCiDir;
+          } else {
+            // Default or unknown CI - place relative to CI type dir?
+            targetRelativePath = templateRelativePath.replace(/^ci\/[^/]+\/workflows\//, '');
           }
-          // Add other CI types if needed
         } else {
            // Fallback for unknown categories? Or assume structure is correct?
            targetRelativePath = templateRelativePath;

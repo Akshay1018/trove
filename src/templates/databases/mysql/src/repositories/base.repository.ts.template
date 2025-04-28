@@ -1,1 +1,66 @@
-// TODO: Implement template
+import {
+  Repository,
+  FindManyOptions,
+  FindOneOptions,
+  DeepPartial,
+  UpdateResult,
+  DeleteResult,
+  FindOptionsWhere,
+} from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+
+// Base Repository for TypeORM entities. Assumes primary key field is named 'id'.
+export class BaseRepository<T extends { id: string | number }> {
+  constructor(protected readonly repository: Repository<T>) {}
+
+  async create(data: DeepPartial<T>): Promise<T> {
+    // Creates a new entity instance and copies all entity properties from the given object.
+    const entity = this.repository.create(data);
+    // Saves the given entity. If the entity already exist in the database, it is updated.
+    // If the entity does not exist in the database, it is inserted.
+    return this.repository.save(entity);
+  }
+
+  async find(options?: FindManyOptions<T>): Promise<T[]> {
+    // Finds entities that match given find options.
+    return this.repository.find(options);
+  }
+
+  async findOne(options: FindOneOptions<T>): Promise<T | null> {
+    // Finds the first entity that matches given find options.
+    return this.repository.findOne(options);
+  }
+
+  // Convenience method for finding by ID.
+  async findById(id: T['id'], options?: Omit<FindOneOptions<T>, 'where'>): Promise<T | null> {
+     // Constructs the 'where' clause dynamically using the primary key 'id'.
+     // This casting is necessary because FindOptionsWhere is complex.
+     const criteria = { id } as FindOptionsWhere<T>;
+     return this.repository.findOne({ ...options, where: criteria });
+  }
+
+  // Updates entity by id.
+  // Note: Returns UpdateResult, not the updated entity itself.
+  async update(id: T['id'], data: QueryDeepPartialEntity<T>): Promise<UpdateResult> {
+    const criteria = { id } as FindOptionsWhere<T>;
+    return this.repository.update(criteria, data);
+  }
+
+  // Deletes entity by id.
+  // Note: Returns DeleteResult.
+  async delete(id: T['id']): Promise<DeleteResult> {
+     const criteria = { id } as FindOptionsWhere<T>;
+    return this.repository.delete(criteria);
+  }
+
+  async count(options?: FindManyOptions<T>): Promise<number> {
+    // Counts entities that match given find options.
+    return this.repository.count(options);
+  }
+
+  // Checks if entity exists based on options.
+  async exists(options: FindOneOptions<T>): Promise<boolean> {
+      const count = await this.repository.count(options);
+      return count > 0;
+  }
+} 
