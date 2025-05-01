@@ -1,14 +1,16 @@
-import { join, dirname, basename } from 'path';
+import { join, dirname } from 'path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { render } from 'ejs';
 import { logger } from './logger';
 import { TemplateOptions } from '../types/template-options';
 import { TEMPLATES_DIR } from '../config/constants';
+import { mergePackageJson } from './package-merger';
 
 export class TemplateManager {
   private templatesPath: string;
   private projectPath: string;
   private templateOptions: TemplateOptions;
+  private packageJsonContents: any[] = [];
 
   constructor(templateOptions: TemplateOptions, projectPath: string) {
     this.templatesPath = TEMPLATES_DIR;
@@ -77,36 +79,14 @@ export class TemplateManager {
     // Process CI/CD templates
     const ciTemplates = this.getTemplateFiles(`ci/${this.templateOptions.ci}`);
     await this.processTemplateFiles(ciTemplates);
-  }
 
-  private getTemplateFiles(category: string): string[] {
-    const categoryPath = join(this.templatesPath, category);
-    if (!existsSync(categoryPath)) {
-      logger.warn(`Template category not found: ${category}`);
-      return [];
+    // After all templates are processed, merge and write the final package.json
+    if (this.packageJsonContents.length > 0) {
+      const mergedPackageJson = mergePackageJson(this.packageJsonContents);
+      const targetPath = join(this.projectPath, 'package.json');
+      writeFileSync(targetPath, JSON.stringify(mergedPackageJson, null, 2));
+      logger.info('Written merged package.json');
     }
-
-    const templates = this.walkDirectory(categoryPath);
-    logger.info(`Found ${templates.length} templates in ${category}`);
-    return templates;
-  }
-
-  private walkDirectory(dir: string): string[] {
-    const results: string[] = [];
-    const list = readdirSync(dir);
-
-    list.forEach(file => {
-      const fullPath = join(dir, file);
-      const stat = statSync(fullPath);
-
-      if (stat.isDirectory()) {
-        results.push(...this.walkDirectory(fullPath));
-      } else if (file.endsWith('.template')) {
-        results.push(fullPath);
-      }
-    });
-
-    return results;
   }
 
   private async processTemplateFiles(templates: string[]): Promise<void> {
@@ -118,91 +98,89 @@ export class TemplateManager {
         // Calculate relative path within the templates directory
         const templateRelativePath = template
           .replace(this.templatesPath, '')
-          .replace(/^\/+/, ''); // Remove leading slash
+          .replace(/^\/+/, '');
+
+        // Special handling for package.json files
+        if (templateRelativePath.endsWith('package.json.template')) {
+          try {
+            const packageJson = JSON.parse(processed);
+            this.packageJsonContents.push(packageJson);
+            continue; // Skip writing this file as we'll merge it later
+          } catch (error) {
+            logger.error('Failed to parse package.json template:', error);
+          }
+        }
 
         let targetRelativePath = '';
 
-        // --- Determine Correct Relative Path in Target Project ---
         if (templateRelativePath.startsWith('common/base/')) {
           targetRelativePath = templateRelativePath.replace(/^common\/base\//, '');
-          // Root files from common/base (e.g., package.json) are handled implicitly
         } else if (templateRelativePath.startsWith('frameworks/')) {
           targetRelativePath = templateRelativePath.replace(/^frameworks\/[^/]+\//, '');
         } else if (templateRelativePath.startsWith('databases/')) {
           targetRelativePath = templateRelativePath.replace(/^databases\/[^/]+\//, '');
-           // Root files from DB templates (e.g., .env.example) handled implicitly if not in src/
         } else if (templateRelativePath.startsWith('auth/')) {
           targetRelativePath = templateRelativePath.replace(/^auth\/[^/]+\//, '');
-          // Root files from Auth templates (e.g., views/) handled implicitly if not in src/
         } else if (templateRelativePath.startsWith('ci/')) {
           const ciType = this.templateOptions.ci;
-          const selectedDatabase = this.templateOptions.database;
-          const originalCiFilename = basename(templateRelativePath).replace(/\.template$/, '');
-          
-          // --- Filter database-specific CI files ---
-          let skipFile = false;
-          const isGitLabFile = originalCiFilename.includes('.gitlab'); // Check if it's the main GitLab file
-
-          // Apply filter based on selected database, *unless* it's the main .gitlab-ci.yml file
-          if (!isGitLabFile) { // Don't skip the main .gitlab-ci.yml based on DB name
-            if (originalCiFilename.includes('mongodb') && selectedDatabase !== 'mongodb') {
-              skipFile = true;
-            } else if (originalCiFilename.includes('postgres') && selectedDatabase !== 'postgres') {
-              skipFile = true;
-            } else if (originalCiFilename.includes('mysql') && selectedDatabase !== 'mysql') {
-              skipFile = true;
-            }
-          }
-          // Add more database checks if needed
-          
-          if (skipFile) {
-              logger.info(`Skipping CI template for non-selected database: ${originalCiFilename}`);
-              continue; // Skip this file
-          }
-          // --- End Filter ---
-
-          // --- Calculate Correct Target Path ---
-          const ciSourceDir = dirname(templateRelativePath); // e.g., ci/github/workflows
-          const relativePathWithinCiDir = templateRelativePath.substring(ciSourceDir.length + 1); // e.g., ci.yml.template
+          const ciSourceDir = dirname(templateRelativePath);
+          const relativePathWithinCiDir = templateRelativePath.substring(ciSourceDir.length + 1);
 
           if (ciType === 'github') {
-            // Files go into .github/workflows/
             targetRelativePath = join('.github', 'workflows', relativePathWithinCiDir);
           } else if (ciType === 'gitlab') {
-            // .gitlab-ci.yml goes to root, others maybe too? (Adjust if needed)
             targetRelativePath = relativePathWithinCiDir;
           } else if (ciType === 'bitbucket') {
-            // bitbucket-pipelines.yml goes to root, others maybe too? (Adjust if needed)
             targetRelativePath = relativePathWithinCiDir;
           } else {
-            // Default or unknown CI - place relative to CI type dir?
             targetRelativePath = templateRelativePath.replace(/^ci\/[^/]+\/workflows\//, '');
           }
         } else {
-           // Fallback for unknown categories? Or assume structure is correct?
-           targetRelativePath = templateRelativePath;
+          targetRelativePath = templateRelativePath;
         }
 
         // Remove .template extension from the final path
         targetRelativePath = targetRelativePath.replace(/\.template$/, '');
 
-        // --- Final Path Calculation ---
         const targetPath = join(this.projectPath, targetRelativePath);
-
-        // Ensure target directory exists
         const targetDir = dirname(targetPath);
+
         if (!existsSync(targetDir)) {
           mkdirSync(targetDir, { recursive: true });
         }
 
-        // Write the processed file
         writeFileSync(targetPath, processed);
-        logger.info(`Processed template: ${targetRelativePath} -> ${targetPath}`);
+        logger.info(`Processed template: ${templateRelativePath} -> ${targetPath}`);
 
       } catch (error) {
         logger.error(`Failed to process template ${template}:`, error);
         throw error;
       }
     }
+  }
+
+  private getTemplateFiles(relativePath: string): string[] {
+    const fullPath = join(this.templatesPath, relativePath);
+    if (!existsSync(fullPath)) {
+      logger.info(`No templates found in ${relativePath}`);
+      return [];
+    }
+
+    const templates: string[] = [];
+    const items = readdirSync(fullPath);
+
+    for (const item of items) {
+      const itemPath = join(fullPath, item);
+      const stat = statSync(itemPath);
+
+      if (stat.isDirectory()) {
+        templates.push(...this.getTemplateFiles(join(relativePath, item)));
+      } else {
+        templates.push(itemPath);
+      }
+    }
+
+    logger.info(`Found ${templates.length} templates in ${relativePath}`);
+    return templates;
   }
 } 
