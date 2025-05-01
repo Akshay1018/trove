@@ -1,1 +1,52 @@
-// TODO: Implement template
+import {
+  Repository,
+  FindManyOptions,
+  FindOneOptions,
+  DeepPartial,
+  UpdateResult,
+  DeleteResult,
+  FindOptionsWhere,
+} from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+
+// Base Repository for TypeORM entities. Assumes primary key field is named 'id'.
+export class BaseRepository<T extends { id: string | number }> {
+  constructor(protected readonly repository: Repository<T>) {}
+
+  async create(data: DeepPartial<T>): Promise<T> {
+    const entity = this.repository.create(data);
+    return this.repository.save(entity);
+  }
+
+  async find(options?: FindManyOptions<T>): Promise<T[]> {
+    return this.repository.find(options);
+  }
+
+  async findOne(options: FindOneOptions<T>): Promise<T | null> {
+    return this.repository.findOne(options);
+  }
+
+  async findById(id: T['id'], options?: Omit<FindOneOptions<T>, 'where'>): Promise<T | null> {
+    const criteria = { id } as FindOptionsWhere<T>;
+    return this.repository.findOne({ ...options, where: criteria });
+  }
+
+  async update(id: T['id'], data: QueryDeepPartialEntity<T>): Promise<UpdateResult> {
+    const criteria = { id } as FindOptionsWhere<T>;
+    return this.repository.update(criteria, data);
+  }
+
+  async delete(id: T['id']): Promise<DeleteResult> {
+    const criteria = { id } as FindOptionsWhere<T>;
+    return this.repository.delete(criteria);
+  }
+
+  async count(options?: FindManyOptions<T>): Promise<number> {
+    return this.repository.count(options);
+  }
+
+  async exists(options: FindOneOptions<T>): Promise<boolean> {
+    const count = await this.repository.count(options);
+    return count > 0;
+  }
+}
