@@ -1,1 +1,38 @@
-// TODO: Implement template
+import { Repository } from 'typeorm';
+import { User } from '../../entities/User'; // Adjust path if entity location differs
+import { BaseRepository } from './base.repository'; // Assumes BaseRepository is in the same directory
+
+// TypeORM User Repository extending the generic BaseRepository.
+// Requires a Repository<User> instance to be passed to the constructor.
+// In a real application, this is typically handled by a Dependency Injection framework.
+export class UserRepository extends BaseRepository<User> {
+  constructor(userRepository: Repository<User>) {
+    super(userRepository);
+  }
+
+  // --- User-specific methods --- 
+
+  /**
+   * Finds a user by their email address.
+   * @param email The email address to search for.
+   * @returns A Promise resolving to the User or null if not found.
+   */
+  async findByEmail(email: string): Promise<User | null> {
+    return this.repository.findOne({ where: { email } });
+  }
+
+  /**
+   * Finds users with optional pagination.
+   * @param options Pagination options (skip, take).
+   * @returns A Promise resolving to a tuple containing the list of users and the total count.
+   */
+  async findUsers(options?: { skip?: number; take?: number }): Promise<[User[], number]> {
+    return this.repository.findAndCount({
+      skip: options?.skip,
+      take: options?.take,
+      order: { createdAt: 'DESC' } // Example: Order by creation date descending
+    });
+  }
+
+  // Add other user-specific database interactions here...
+}
