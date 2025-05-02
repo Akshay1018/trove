@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-github2": "^0.1.12",
+    "koa-session": "^6.4.0",
+    "koa-passport": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/passport": "^1.0.12",
+    "@types/passport-google-oauth20": "^2.0.11",
+    "@types/passport-github2": "^1.2.5",
+    "@types/koa-session": "^6.4.5"
+  }
+} 
