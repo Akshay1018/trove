@@ -2,68 +2,29 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main ]
 
 jobs:
+  <% if (database === 'mysql') { %>
+  setup-mysql:
+    uses: ./.github/workflows/mysql.yml
+  <% } %>
+
   test:
     runs-on: ubuntu-latest
-
-    services:
-      <% if (database === 'mongodb') { %>
-      mongodb:
-        image: mongo:6.0 # Use a specific version for stability
-        ports:
-          - 27017:27017
-        # Options to ensure the service is ready before tests run
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({serverStatus:1})' --quiet" 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 3
-      <% } else if (database === 'mysql') { %>
-      mysql:
-        image: mysql:8.0 # Use a specific version for stability
-        env:
-          MYSQL_ROOT_PASSWORD: root # Default password for testing
-          MYSQL_DATABASE: test_db # Default database name for testing
-        ports:
-          - 3306:3306
-        # Options to ensure the service is ready before tests run
-        options: >-
-          --health-cmd="mysqladmin ping --silent" 
-          --health-interval=10s 
-          --health-timeout=5s 
-          --health-retries=3 
-      <% } else if (database === 'postgres') { %>
-      postgres:
-        image: postgres:15 # Use a specific version for stability
-        env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpassword
-          POSTGRES_DB: test_db # Use consistent test_db name
-        ports:
-          - 5432:5432
-        # Options to ensure the service is ready before tests run
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      <% } %>
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
+    <% if (database === 'mysql') { %>
+    needs: setup-mysql
+    <% } %>
 
     steps:
     - uses: actions/checkout@v4
     
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: '20.x'
         cache: 'npm'
     
     - name: Install dependencies
@@ -76,26 +37,14 @@ jobs:
       run: npm test
       env:
         NODE_ENV: test
-        <% if (database === 'mongodb') { %>
-        MONGODB_URI: mongodb://localhost:27017/test_db # Use consistent test_db name
-        <% } else if (database === 'mysql') { %>
-        # For TypeORM/MySQL (adjust if your app uses DATABASE_URL directly)
+        <% if (database === 'mysql') { %>
         DB_HOST: localhost
         DB_PORT: 3306
         DB_USERNAME: root
         DB_PASSWORD: root
         DB_DATABASE: test_db
-        <% } else if (database === 'postgres') { %>
-        # For TypeORM/PostgreSQL (adjust if your app uses DATABASE_URL directly)
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_USERNAME: testuser
-        DB_PASSWORD: testpassword
-        DB_DATABASE: test_db
         <% } %>
-        # Add common secrets needed for tests (ensure they are set in GitHub Secrets)
-        JWT_SECRET: ${{ secrets.JWT_SECRET || 'default-test-secret' }} 
-        # Add other necessary test environment variables here
+        JWT_SECRET: ${{ secrets.JWT_SECRET || 'default-test-secret' }}
 
   build:
     needs: test

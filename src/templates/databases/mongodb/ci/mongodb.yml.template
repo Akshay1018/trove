@@ -1,0 +1,24 @@
+name: MongoDB Service
+
+on:
+  workflow_call: # This allows the workflow to be called by other workflows
+
+jobs:
+  mongodb:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({serverStatus:1})' --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+
+    steps:
+      - name: Verify MongoDB connection
+        run: |
+          mongosh --eval 'db.runCommand({serverStatus:1})' 

@@ -210,28 +210,16 @@ export const AUTH_SPECIFIC: Record<Auth, string[]> = {
 export const CI_SPECIFIC: Record<CI, string[]> = {
   github: [
     '.github/workflows/ci.yml',
-    '.github/workflows/cd.yml',
-    '.github/workflows/mongodb-pipeline.yml',
-    '.github/workflows/postgres-pipeline.yml',
-    '.github/workflows/mysql-pipeline.yml'
+    '.github/workflows/cd.yml'
   ],
   gitlab: [
-    '.gitlab-ci.yml',
-    'ci/mongodb-pipeline.yml',
-    'ci/postgres-pipeline.yml',
-    'ci/mysql-pipeline.yml'
+    '.gitlab-ci.yml'
   ],
   jenkins: [
-    'Jenkinsfile',
-    'ci/mongodb-pipeline.groovy',
-    'ci/postgres-pipeline.groovy',
-    'ci/mysql-pipeline.groovy'
+    'Jenkinsfile'
   ],
   bitbucket: [
-    'bitbucket-pipelines.yml',
-    'ci/mongodb-pipeline.yml',
-    'ci/postgres-pipeline.yml',
-    'ci/mysql-pipeline.yml'
+    'bitbucket-pipelines.yml'
   ],
   skip: []
 };

@@ -5,7 +5,10 @@
     "src/repositories/base.repository.ts": "repositories/base.repository.ts.template",
     "src/repositories/user.repository.ts": "repositories/user.repository.ts.template",
     "src/config/database.ts": "config/database.ts.template",
-    "src/migrations/001_init.sql": "migrations/001_init.sql.template"
+    "src/migrations/001_init.sql": "migrations/001_init.sql.template",
+    ".env.example": ".env.example.template",
+    "ci/mysql.yml": "ci/mysql.yml.template",
+    "mysql-pipeline.yml": "ci/mysql-pipeline.yml.template"
   },
   "dependencies": {
     "mysql2": "^3.0.0",

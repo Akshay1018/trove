@@ -6,10 +6,11 @@
     "src/models/user.model.ts": "models/user.model.ts.template",
     "src/repositories/base.repository.ts": "repositories/base.repository.ts.template",
     "src/repositories/user.repository.ts": "repositories/user.repository.ts.template",
-    "src/config/database.ts": "config/database.ts.template"
+    "src/config/database.ts": "config/database.ts.template",
+    "mongodb-pipeline.yml": "ci/mongodb-pipeline.yml.template"
   },
   "dependencies": {
-    "mongoose": "^7.0.0",
+    "mongoose": "^8.0.0",
     "@types/mongoose": "^5.11.97"
   }
 } 

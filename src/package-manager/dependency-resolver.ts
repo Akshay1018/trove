@@ -150,16 +150,43 @@ export function resolveDependencies(options: TemplateOptions) {
         devDependencies.push('@types/jsonwebtoken', '@types/bcryptjs');
         break;
       case 'session':
-        dependencies.push('express-session', 'connect-mongo');
-        devDependencies.push('@types/express-session');
+        if (options.framework === 'koa') {
+          dependencies.push('koa-session');
+          devDependencies.push('@types/koa-session');
+        } else {
+          dependencies.push('express-session', 'connect-mongo');
+          devDependencies.push('@types/express-session');
+        }
         break;
       case 'oauth':
-        dependencies.push('passport', 'passport-google-oauth20', 'passport-github2');
-        devDependencies.push(
-          '@types/passport',
-          '@types/passport-google-oauth20',
-          '@types/passport-github2'
-        );
+        if (options.framework === 'koa') {
+          dependencies.push(
+            'passport',
+            'passport-google-oauth20',
+            'passport-github2',
+            'koa-session',
+            'koa-passport'
+          );
+          devDependencies.push(
+            '@types/passport',
+            '@types/passport-google-oauth20',
+            '@types/passport-github2',
+            '@types/koa-session'
+          );
+        } else {
+          dependencies.push(
+            'passport',
+            'passport-google-oauth20',
+            'passport-github2',
+            'express-session'
+          );
+          devDependencies.push(
+            '@types/passport',
+            '@types/passport-google-oauth20',
+            '@types/passport-github2',
+            '@types/express-session'
+          );
+        }
         break;
     }
   }

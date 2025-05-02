@@ -27,17 +27,33 @@ export const sessionDependencies: Dependencies = {
   }
 };
 
-export const oauthDependencies: Dependencies = {
+export const expressOAuthDependencies: Dependencies = {
   dependencies: {
-    '@nestjs/passport': '^10.0.2',
     'passport': '^0.7.0',
     'passport-google-oauth20': '^2.0.0',
-    'passport-facebook': '^3.0.0',
-    'passport-github2': '^0.1.12'
+    'passport-github2': '^0.1.12',
+    'express-session': '^1.17.3'
   },
   devDependencies: {
+    '@types/passport': '^1.0.16',
     '@types/passport-google-oauth20': '^2.0.14',
-    '@types/passport-facebook': '^3.0.3',
-    '@types/passport-github2': '^1.2.9'
+    '@types/passport-github2': '^1.2.9',
+    '@types/express-session': '^1.17.10'
+  }
+};
+
+export const koaOAuthDependencies: Dependencies = {
+  dependencies: {
+    'passport': '^0.7.0',
+    'passport-google-oauth20': '^2.0.0',
+    'passport-github2': '^0.1.12',
+    'koa-session': '^6.4.0',
+    'koa-passport': '^6.0.0'
+  },
+  devDependencies: {
+    '@types/passport': '^1.0.16',
+    '@types/passport-google-oauth20': '^2.0.14',
+    '@types/passport-github2': '^1.2.9',
+    '@types/koa-session': '^6.4.5'
   }
 }; 

@@ -5,11 +5,12 @@
     "src/repositories/base.repository.ts": "repositories/base.repository.ts.template",
     "src/repositories/user.repository.ts": "repositories/user.repository.ts.template",
     "src/config/database.ts": "config/database.ts.template",
-    "src/migrations/001_init.sql": "migrations/001_init.sql.template"
+    "src/migrations/001_init.sql": "migrations/001_init.sql.template",
+    "postgres-pipeline.yml": "ci/postgres-pipeline.yml.template"
   },
   "dependencies": {
     "pg": "^8.11.0",
-    "@types/pg": "^8.6.6",
+    "@types/pg": "^8.10.0",
     "typeorm": "^0.3.0"
   }
 } 

@@ -5,6 +5,10 @@
     {
       "source": "workflows/ci.yml",
       "target": ".github/workflows/ci.yml"
+    },
+    {
+      "source": "workflows/cd.yml",
+      "target": ".github/workflows/cd.yml"
     }
   ],
   "directories": [

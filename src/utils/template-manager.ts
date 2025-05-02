@@ -101,10 +101,25 @@ export class TemplateManager {
           .replace(/^\/+/, '');
 
         // Special handling for package.json files
-        if (templateRelativePath.endsWith('package.json.template')) {
+        if (templateRelativePath.endsWith('package.json.template') || 
+            templateRelativePath.endsWith('package.json')) {
           try {
-            const packageJson = JSON.parse(processed);
-            this.packageJsonContents.push(packageJson);
+            // Check if this is a framework-specific package.json
+            if (templateRelativePath.includes(`frameworks/${this.templateOptions.framework}`)) {
+              const packageJson = JSON.parse(processed);
+              this.packageJsonContents.push(packageJson);
+            }
+            // Check if this is a framework-specific auth package.json
+            else if (templateRelativePath.includes(`auth/${this.templateOptions.auth}/${this.templateOptions.framework}.package.json`)) {
+              const packageJson = JSON.parse(processed);
+              this.packageJsonContents.push(packageJson);
+            }
+            // Handle regular package.json files
+            else if (!templateRelativePath.includes('frameworks/') || 
+                     templateRelativePath.includes(`frameworks/${this.templateOptions.framework}`)) {
+              const packageJson = JSON.parse(processed);
+              this.packageJsonContents.push(packageJson);
+            }
             continue; // Skip writing this file as we'll merge it later
           } catch (error) {
             logger.error('Failed to parse package.json template:', error);
