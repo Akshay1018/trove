@@ -67,7 +67,9 @@ const LATEST_VERSIONS: DependencyVersions = {
   '@types/express-session': '^1.18.0',
   '@types/passport': '^1.0.16',
   '@types/passport-google-oauth20': '^2.0.14',
-  '@types/passport-github2': '^1.2.9'
+  '@types/passport-github2': '^1.2.9',
+  'connect-pg-simple': '^6.1.4',
+  'express-mysql-session': '^3.1.0'
 };
 
 export function resolveDependencies(options: TemplateOptions) {
@@ -154,8 +156,23 @@ export function resolveDependencies(options: TemplateOptions) {
           dependencies.push('koa-session');
           devDependencies.push('@types/koa-session');
         } else {
-          dependencies.push('express-session', 'connect-mongo');
+          dependencies.push('express-session');
           devDependencies.push('@types/express-session');
+          // Add only the correct session store for the selected database
+          switch (options.database) {
+            case 'postgres':
+              dependencies.push('connect-pg-simple');
+              devDependencies.push('@types/connect-pg-simple');
+              break;
+            case 'mysql':
+              dependencies.push('express-mysql-session');
+              // No types needed for express-mysql-session
+              break;
+            case 'mongodb':
+              dependencies.push('connect-mongo');
+              // No types needed for connect-mongo
+              break;
+          }
         }
         break;
       case 'oauth':
