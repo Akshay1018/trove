@@ -96,9 +96,11 @@ export class TemplateManager {
         const processed = render(content, this.templateOptions);
 
         // Calculate relative path within the templates directory
-        const templateRelativePath = template
-          .replace(this.templatesPath, '')
-          .replace(/^\/+/, '');
+        //The normalization to convert the backslashes into forward slashes
+        const rawRelative=template.replace(this.templatesPath,'');
+        const templateRelativePath = rawRelative
+        .replace(/\\/g,'/')
+        .replace(/^\/+/,'');
 
         // Special handling for package.json files
         if (templateRelativePath.endsWith('package.json.template') || 
@@ -126,36 +128,10 @@ export class TemplateManager {
           }
         }
 
-        let targetRelativePath = '';
-
-        if (templateRelativePath.startsWith('common/base/')) {
-          targetRelativePath = templateRelativePath.replace(/^common\/base\//, '');
-        } else if (templateRelativePath.startsWith('frameworks/')) {
-          targetRelativePath = templateRelativePath.replace(/^frameworks\/[^/]+\//, '');
-        } else if (templateRelativePath.startsWith('databases/')) {
-          targetRelativePath = templateRelativePath.replace(/^databases\/[^/]+\//, '');
-        } else if (templateRelativePath.startsWith('auth/')) {
-          targetRelativePath = templateRelativePath.replace(/^auth\/[^/]+\//, '');
-        } else if (templateRelativePath.startsWith('ci/')) {
-          const ciType = this.templateOptions.ci;
-          const ciSourceDir = dirname(templateRelativePath);
-          const relativePathWithinCiDir = templateRelativePath.substring(ciSourceDir.length + 1);
-
-          if (ciType === 'github') {
-            targetRelativePath = join('.github', 'workflows', relativePathWithinCiDir);
-          } else if (ciType === 'gitlab') {
-            targetRelativePath = relativePathWithinCiDir;
-          } else if (ciType === 'bitbucket') {
-            targetRelativePath = relativePathWithinCiDir;
-          } else {
-            targetRelativePath = templateRelativePath.replace(/^ci\/[^/]+\/workflows\//, '');
-          }
-        } else {
-          targetRelativePath = templateRelativePath;
-        }
-
-        // Remove .template extension from the final path
-        targetRelativePath = targetRelativePath.replace(/\.template$/, '');
+        const targetRelativePath = resolveTargetRelativePath(
+          templateRelativePath,
+          this.templateOptions.ci
+        );
 
         const targetPath = join(this.projectPath, targetRelativePath);
         const targetDir = dirname(targetPath);
@@ -198,4 +174,41 @@ export class TemplateManager {
     logger.info(`Found ${templates.length} templates in ${relativePath}`);
     return templates;
   }
-} 
+}
+
+/**
+ * Normalizes template path and resolves destination relative path
+ * cross-platform for Windows, macOS, and Linux.
+ */
+export function resolveTargetRelativePath(
+  templateRelativePath: string,
+  ciType?: string
+): string {
+  // Normalize Windows backslashes to forward slashes and strip leading slashes
+  const normalized = templateRelativePath.replace(/\\/g, '/').replace(/^\/+/, '');
+
+  let targetRelativePath = '';
+
+  if (normalized.startsWith('common/base/')) {
+    targetRelativePath = normalized.replace(/^common\/base\//, '');
+  } else if (normalized.startsWith('frameworks/')) {
+    targetRelativePath = normalized.replace(/^frameworks\/[^/]+\//, '');
+  } else if (normalized.startsWith('databases/')) {
+    targetRelativePath = normalized.replace(/^databases\/[^/]+\//, '');
+  } else if (normalized.startsWith('auth/')) {
+    targetRelativePath = normalized.replace(/^auth\/[^/]+\//, '');
+  } else if (normalized.startsWith('ci/')) {
+    if (ciType === 'github') {
+      const relativePath = normalized.replace(/^ci\/github\/workflows\//, '');
+      targetRelativePath = join('.github', 'workflows', relativePath);
+    } else {
+      targetRelativePath = normalized.replace(/^ci\/[^/]+\//, '');
+    }
+  } else {
+    targetRelativePath = normalized;
+  }
+
+  // Remove .template extension from the final path
+  return targetRelativePath.replace(/\.template$/, '');
+}
+ 
