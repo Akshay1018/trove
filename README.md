@@ -103,6 +103,8 @@ If you haven't installed the required database engine yet, here are the installa
 - MySQL: [MySQL Workbench](https://www.mysql.com/products/workbench/)
 - Multi-Database: [DBeaver Community](https://dbeaver.io/)
 
+---
+
 ## 🌟 Why Trove CLI?
 
 ### Streamlined Development Experience
@@ -143,18 +145,6 @@ Trove CLI eliminates these pain points by providing:
 - Custom configuration options
 - Extensible project structure
 - Modern tooling out of the box
-
-Here's a quick comparison:
-
-| Feature | Manual Setup | Trove CLI |
-|---------|-------------|----------|
-| Initial Setup Time | 1-2 hours | 5 minutes |
-| CI/CD Configuration | 30-60 minutes | 2 minutes |
-| Boilerplate Code | Manual writing | Auto-generated |
-| Best Practices | Manual research | Built-in |
-| Dependencies | Manual selection | Curated selection |
-| Configuration Files | Manual creation | Auto-generated |
-| Learning Curve | Steep | Gentle | 
 
 ### Real-World Time Saving Example
 
@@ -200,16 +190,11 @@ Everything is set up with best practices, including:
 - Automatic database migrations
 - Pre-configured test environment
 
-### Key Differentiator: CI/CD Excellence
-
-While other CLIs focus on just scaffolding, Trove CLI excels in CI/CD automation:
-
-| Feature | Other CLIs | Trove CLI |
-|---------|------------|-----------|
-| CI/CD Setup | Manual or basic templates | Complete pipeline generation with:<br>- Multi-stage workflows<br>- Caching strategies<br>- Secret management<br>- Environment configurations<br>- Docker integration<br>- Automated testing<br>- Database migrations |
+---
 
 ## 🚀 Features
 
+### Core Framework & Database Support
 - **Multiple Framework Support**
   - Express.js
   - Koa.js
@@ -239,6 +224,89 @@ While other CLIs focus on just scaffolding, Trove CLI excels in CI/CD automation
   - Swagger/OpenAPI Documentation
   - Hot Reload Development
   - Docker Support
+
+### 🧠 AI-Native & Agentic Features
+Trove is evolving beyond a traditional scaffolding tool into an AI-ready backend platform.
+
+- **Natural-Language Project Planning**
+  - Describe the backend you want in plain English
+  - Trove can convert requirements into a structured project plan
+  - Framework, database, and auth recommendations are grounded in real supported capabilities
+
+- **AI-Assisted Stack Recommendation**
+  - Compatible stack suggestions based on project needs
+  - Validation before generation to reduce unsupported combinations
+
+- **Verified Project Generation**
+  - Generate projects using deterministic templates
+  - Run post-generation validation checks
+  - Surface actual build/test results and failures
+
+- **Self-Repair Workflow (Planned)**
+  - Diagnose failing generated projects
+  - Apply bounded fixes with approval-based safeguards
+  - Improve first-pass reliability for generated apps
+
+- **Model Context Protocol (MCP) Support (Planned)**
+  - Make Trove usable from AI coding agents and MCP-compatible tools
+  - Expose project-generation and validation capabilities via standard tools
+  - Keep the CLI and agent workflows interoperable
+
+- **Headless Generation API (Planned)**
+  - Expose Trove capabilities via a programmatic interface
+  - Integrate into automation and custom tooling
+  - Support developer and AI workflows without requiring CLI interaction
+
+### 🔐 Security & Reliability
+- **Approval Gates for Sensitive Operations**
+  - Require explicit confirmation before destructive or risky actions
+- **Filesystem Safety Controls**
+  - Limit write scope and protect sensitive project areas
+- **Secret Redaction**
+  - Keep credentials and environment values from leaking in logs
+- **Production-Ready Security Templates**
+  - Helmet configuration
+  - Rate limiting
+  - CORS policies
+  - Input validation patterns
+
+### 📚 Documentation & Developer Productivity
+- **Context-Aware Documentation Generation**
+  - Generate stack-aware README files
+  - Produce OpenAPI/Swagger specs based on selected framework and routes
+  - Generate environment configuration docs automatically
+- **Automated Project Validation**
+  - Lint, build, and test checks aligned with the generated stack
+- **Better Developer Experience**
+  - Reduced setup time
+  - Cleaner project scaffolding
+  - More reliable generated output
+
+---
+
+## ✨ What's New in Trove
+
+Trove is moving toward a more modern AI-first backend generation experience while keeping the current CLI workflow reliable and easy to use.
+
+### Recent Focus Areas
+- AI-native backend planning using natural language
+- Provider-agnostic AI planner and recommendation engine
+- Programmatic generation API for headless workflows
+- Native MCP server for AI coding agents
+- Stronger approval and safety controls for automated operations
+- Post-generation validation and bounded self-repair
+- Context-aware documentation generation for stack-specific projects
+- Improved security middleware and approval flows
+
+### High-Impact Planned Capabilities
+- Natural-language generation of full backend architecture plans
+- AI-based compatibility validation before project creation
+- Guidance for framework, database, and stack decisions
+- Verified generation flow with validation feedback loops
+- Safe automation boundaries for file writes, commands, and secrets
+- Stack-aware project documentation generation
+
+---
 
 ## 📦 Installation
 
@@ -280,6 +348,8 @@ After installation, you might need to configure:
 2. OAuth credentials (if using social authentication)
 3. Environment variables
 
+---
+
 ## 🛠️ Quick Start
 
 Create a new backend application:
@@ -294,6 +364,8 @@ Follow the interactive prompts to configure your project:
 3. Configure authentication method
 4. Set up CI/CD pipeline
 
+---
+
 ## 📖 Usage Guide
 
 ### Creating a New Project
@@ -304,17 +376,23 @@ trove create <project-name> [options]
 
 #### Options
 
-- \`--framework\`: Specify the framework (express, koa, nest, fastify)
-- \`--database\`: Choose database integration (mongodb, postgres, mysql)
-- \`--auth\`: Select authentication method (jwt, session, oauth)
-- \`--skip-git\`: Skip git initialization
-- \`--skip-install\`: Skip package installation
-- \`--skip-tests\`: Skip test setup
-- \`--skip-ci\`: Skip CI/CD setup
+- `--framework`: Specify the framework (express, koa, nest, fastify)
+- `--database`: Choose database integration (mongodb, postgres, mysql)
+- `--auth`: Select authentication method (jwt, session, oauth)
+- `--skip-git`: Skip git initialization
+- `--skip-install`: Skip package installation
+- `--skip-tests`: Skip test setup
+- `--skip-ci`: Skip CI/CD setup
+
+### Example Setup
+
+```bash
+trove create my-api --framework nest --database postgres --auth jwt --skip-install
+```
 
 ### Project Structure
 
-```
+```text
 my-awesome-api/
 ├── src/
 │   ├── config/
@@ -334,6 +412,8 @@ my-awesome-api/
 └── README.md
 ```
 
+---
+
 ## 🧪 Testing
 
 Run tests:
@@ -347,6 +427,14 @@ Run tests with coverage:
 ```bash
 npm run test:coverage
 ```
+
+### Testing & Quality Roadmap
+- Executable integration test templates
+- End-to-end test scaffolds
+- Production-grade validation workflows
+- Security and performance benchmarking
+
+---
 
 ## 🚢 Deployment
 
@@ -394,13 +482,23 @@ jobs:
         run: npm run build
 ```
 
+---
+
 ## 📚 API Documentation
 
 API documentation is automatically generated using Swagger/OpenAPI. Access it at:
 
-```
+```text
 http://localhost:3000/api-docs
 ```
+
+### Documentation Roadmap
+- Stack-aware README generation
+- OpenAPI spec generation based on project config
+- Environment variable documentation
+- Better API docs for generated projects
+
+---
 
 ## 🤝 Contributing
 
@@ -419,11 +517,16 @@ npm install
 npm run dev
 ```
 
+---
+
 ## 📞 Support
 
 - GitHub Issues: [Report a bug](https://github.com/Akshay1018/trove/issues)
 - Email: ak715173@gmail.com
+
 <!-- - Documentation: [Full documentation](https://github.com/Akshay1018/trove/wiki) -->
+
+---
 
 ## 🗺️ Roadmap
 
@@ -440,6 +543,16 @@ npm run dev
 - [ ] SQLite
 - [ ] Database migration tools
 - [ ] Connection pooling optimization
+
+### AI & Agentic Features
+- [ ] Natural-language project requirements
+- [ ] AI-assisted framework and database recommendations
+- [ ] Provider-agnostic AI planner
+- [ ] AI command for interactive project planning (`trove ai`)
+- [ ] Post-generation validation and self-repair
+- [ ] Model Context Protocol (MCP) server support
+- [ ] Programmatic headless generation API
+- [ ] Capability registry and config validator
 
 ### Security Enhancements
 - [ ] Advanced Rate Limiting
@@ -467,6 +580,21 @@ npm run dev
   - XSS protection
   - CSRF protection
   - Security audit tools
+- [ ] Filesystem sandboxing and approval gates
+- [ ] Secret redaction and safe logging
+
+### Documentation & Observability
+- [ ] Context-aware README generation
+- [ ] Stack-aware OpenAPI specification generation
+- [ ] Environment documentation generation
+- [ ] Structured logging
+- [ ] Log aggregation
+- [ ] Prometheus metrics
+- [ ] Grafana dashboards
+- [ ] OpenTelemetry integration
+- [ ] Distributed tracing
+- [ ] Performance profiling
+- [ ] Error tracking
 
 ### Developer Experience
 - [ ] Enhanced CLI Features
@@ -525,6 +653,8 @@ npm run dev
   - Multi-environment support
   - Automated releases
   - Infrastructure as Code
+
+---
 
 ## ⭐ Show Your Support
 
