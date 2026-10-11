@@ -138,4 +138,35 @@ If you need help, you can:
 - Open a GitHub issue
 - Email us at ak715173@gmail.com
 
-Thank you for contributing to Trove CLI! 🚀 
+Thank you for contributing to Trove CLI! 🚀
+## Deployment Scripts
+
+Trove provides scripts to build a generated project and prepare it for deployment.
+
+### Build a Generated Project
+
+Run the build script with Bash and provide the path to the generated project:
+
+```bash
+bash scripts/build.sh /path/to/generated-project
+```
+
+The script checks the project's build configuration, installs dependencies if needed, and runs `npm run build`.
+
+### Prepare for Deployment
+
+Run:
+
+```bash
+bash scripts/deploy.sh /path/to/generated-project
+```
+
+This validates the project configuration and builds the project. It does not deploy the application to a hosting provider. Complete deployment using your hosting provider's instructions.
+
+### Requirements and Security
+
+- Node.js, npm, and Bash are required.
+- Use Git Bash, WSL, Linux, or macOS to run the scripts.
+- Configure production environment variables through your hosting provider.
+- Never commit secrets, API keys, or production environment files.
+- Review [the Deployment Guide](docs/DEPLOYMENT.md) for prerequisites, troubleshooting, and the deployment checklist.
