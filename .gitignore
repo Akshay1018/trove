@@ -29,3 +29,6 @@ coverage/
 # Logs
 logs/
 *.log 
+
+# testing
+my-test-app/

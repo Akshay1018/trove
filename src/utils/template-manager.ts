@@ -1,5 +1,5 @@
 import { join, dirname } from 'path';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, statSync, chmodSync, copyFileSync } from 'fs';
 import { render } from 'ejs';
 import { logger } from './logger';
 import { TemplateOptions } from '../types/template-options';
@@ -48,6 +48,8 @@ export class TemplateManager {
       'src/types',
       'src/__tests__/unit',
       'src/__tests__/integration',
+      'docs',
+      'scripts',
       'logs'
     ];
 
@@ -86,6 +88,14 @@ export class TemplateManager {
       const targetPath = join(this.projectPath, 'package.json');
       writeFileSync(targetPath, JSON.stringify(mergedPackageJson, null, 2));
       logger.info('Written merged package.json');
+    }
+
+    // Automatically create .env from .env.example for immediate out-of-the-box readiness
+    const envExamplePath = join(this.projectPath, '.env.example');
+    const envPath = join(this.projectPath, '.env');
+    if (existsSync(envExamplePath) && !existsSync(envPath)) {
+      copyFileSync(envExamplePath, envPath);
+      logger.info('Created .env from .env.example');
     }
   }
 
@@ -141,6 +151,16 @@ export class TemplateManager {
         }
 
         writeFileSync(targetPath, processed);
+
+        // Ensure shell scripts are executable on POSIX systems
+        if (targetRelativePath.endsWith('.sh')) {
+          try {
+            chmodSync(targetPath, 0o755);
+          } catch {
+            // Ignore on platforms without POSIX permission support
+          }
+        }
+
         logger.info(`Processed template: ${templateRelativePath} -> ${targetPath}`);
 
       } catch (error) {

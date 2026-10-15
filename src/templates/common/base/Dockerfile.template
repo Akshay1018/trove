@@ -1,0 +1,40 @@
+# Stage 1: Build TypeScript application
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source code and build config
+COPY tsconfig.json ./
+COPY src/ ./src/
+
+# Compile TypeScript to JavaScript
+RUN npm run build
+
+# Remove development dependencies to save space
+RUN npm prune --production
+
+# ==========================================
+# Stage 2: Production Runtime
+# ==========================================
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=<%= port || 3000 %>
+
+# Security best practice: Run as non-root user
+USER node
+
+# Copy production dependencies and compiled artifacts from builder
+COPY --chown=node:node package*.json ./
+COPY --chown=node:node --from=builder /app/node_modules ./node_modules
+COPY --chown=node:node --from=builder /app/dist ./dist
+
+EXPOSE <%= port || 3000 %>
+
+CMD ["npm", "start"]

@@ -1,0 +1,102 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: <%= projectName %>-api
+    restart: unless-stopped
+    ports:
+      - "<%= port || 3000 %>:<%= port || 3000 %>"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - PORT=<%= port || 3000 %>
+      - NODE_ENV=production
+<% if (database === 'mongodb') { %>
+      - MONGODB_URI=mongodb://mongodb:27017/<%= projectName %>
+    depends_on:
+      mongodb:
+        condition: service_healthy
+<% } else if (database === 'postgres') { %>
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=<%= projectName %>
+    depends_on:
+      postgres:
+        condition: service_healthy
+<% } else if (database === 'mysql') { %>
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=<%= projectName %>
+    depends_on:
+      mysql:
+        condition: service_healthy
+<% } %>
+
+<% if (database === 'mongodb') { %>
+  mongodb:
+    image: mongo:6.0
+    container_name: <%= projectName %>-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+<% } else if (database === 'postgres') { %>
+  postgres:
+    image: postgres:15-alpine
+    container_name: <%= projectName %>-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: <%= projectName %>
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+<% } else if (database === 'mysql') { %>
+  mysql:
+    image: mysql:8.0
+    container_name: <%= projectName %>-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: <%= projectName %>
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+<% } %>
+
+<% if (database && database !== 'skip') { %>
+volumes:
+<% if (database === 'mongodb') { %>
+  mongodb_data:
+<% } else if (database === 'postgres') { %>
+  postgres_data:
+<% } else if (database === 'mysql') { %>
+  mysql_data:
+<% } %>
+<% } %>

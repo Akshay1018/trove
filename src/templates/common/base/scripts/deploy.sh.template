@@ -1,0 +1,38 @@
+#!/bin/sh
+set -e
+
+echo "🚀 Deploying <%= projectName %>..."
+
+# Warn if .env is missing
+if [ ! -f ".env" ]; then
+  echo "⚠️ Warning: .env file not found. Ensure environment variables are configured in production."
+fi
+
+# Run build script
+./scripts/build.sh
+
+# Run automated tests before deploying
+echo "🧪 Running tests..."
+npm test
+
+# If Docker is available and Dockerfile exists, perform container deployment
+if command -v docker >/dev/null 2>&1 && [ -f "Dockerfile" ]; then
+  echo "🐳 Building Docker image..."
+  docker build -t <%= projectName %>:latest .
+
+  if command -v docker-compose >/dev/null 2>&1 && [ -f "docker-compose.yml" ]; then
+    echo "🐳 Starting services with Docker Compose..."
+    docker-compose down || true
+    docker-compose up -d
+  else
+    echo "🐳 Running Docker container..."
+    docker stop <%= projectName %>-api || true
+    docker rm <%= projectName %>-api || true
+    docker run -d --name <%= projectName %>-api -p <%= port || 3000 %>:<%= port || 3000 %> --env-file .env <%= projectName %>:latest
+  fi
+else
+  echo "⚙️ Starting production server with npm..."
+  npm start
+fi
+
+echo "🎉 Deployment finished successfully!"
