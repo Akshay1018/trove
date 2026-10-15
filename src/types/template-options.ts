@@ -18,4 +18,5 @@ export interface TemplateOptions {
   title?: string;
   providers?: string[];
   name?: string;
+  docker?: boolean;
 } 

@@ -114,7 +114,9 @@ export async function createCommand(program: Command, options: CreateCommandOpti
       title: projectName,
       providers: ['google', 'github'],
       name: projectName,
-      packageManager: 'npm'
+      packageManager: 'npm',
+      port: 3000,
+      docker: true
     };
 
     const templateManager = new TemplateManager(templateOptions, projectPath);
@@ -130,11 +132,12 @@ export async function createCommand(program: Command, options: CreateCommandOpti
     console.log(chalk.white('  npm run dev'));
 
     console.log('\n' + chalk.cyan.bold('Available commands:'));
-    console.log(chalk.white('  npm run dev      ') + chalk.gray('- Start development server'));
-    console.log(chalk.white('  npm run build    ') + chalk.gray('- Build for production'));
-    console.log(chalk.white('  npm run test     ') + chalk.gray('- Run tests'));
-    console.log(chalk.white('  npm run lint     ') + chalk.gray('- Lint code'));
-    console.log(chalk.white('  npm run format   ') + chalk.gray('- Format code'));
+    console.log(chalk.white('  npm run dev        ') + chalk.gray('- Start development server'));
+    console.log(chalk.white('  npm run build      ') + chalk.gray('- Build for production'));
+    console.log(chalk.white('  npm run test       ') + chalk.gray('- Run tests'));
+    console.log(chalk.white('  npm run docker:up  ') + chalk.gray('- Start services with Docker Compose'));
+    console.log(chalk.white('  npm run lint       ') + chalk.gray('- Lint code'));
+    console.log(chalk.white('  npm run format     ') + chalk.gray('- Format code'));
 
     console.log('\n' + chalk.green.bold('Happy coding! 🚀\n'));
 

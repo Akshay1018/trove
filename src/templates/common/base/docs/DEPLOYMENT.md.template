@@ -1,0 +1,166 @@
+# Deployment Guide for <%= projectName %>
+
+This guide provides instructions for deploying your **<%= projectName %>** application to various production environments.
+
+---
+
+## 📋 Prerequisites
+
+Before deploying, make sure you have:
+1. Production environment variables configured.
+2. A managed database instance ready (<%= database %>).
+3. Access credentials for your hosting platform or cloud provider.
+
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file in your production environment based on `.env.example`:
+
+```bash
+PORT=<%= port || 3000 %>
+NODE_ENV=production
+<% if (database === 'mongodb') { %>
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<%= projectName %>?retryWrites=true&w=majority
+<% } else if (database === 'postgres') { %>
+DB_HOST=your-postgres-host.com
+DB_PORT=5432
+DB_USER=your_db_user
+DB_PASSWORD=your_secure_password
+DB_NAME=<%= projectName %>
+<% } else if (database === 'mysql') { %>
+DB_HOST=your-mysql-host.com
+DB_PORT=3306
+DB_USER=your_db_user
+DB_PASSWORD=your_secure_password
+DB_NAME=<%= projectName %>
+<% } %>
+<% if (auth === 'jwt') { %>
+JWT_SECRET=your_super_secret_jwt_key_min_32_characters
+JWT_EXPIRES_IN=7d
+<% } %>
+```
+
+---
+
+## 🐳 1. Docker Deployment (Recommended)
+
+### Using Docker Compose
+Run the application and database together in detached mode:
+
+```bash
+# Build and run services
+docker-compose up -d --build
+
+# View container logs
+docker-compose logs -f app
+
+# Stop services
+docker-compose down
+```
+
+### Using Standalone Docker
+Build and run just the application container:
+
+```bash
+# Build the image
+docker build -t <%= projectName %>:latest .
+
+# Run the container
+docker run -d \
+  --name <%= projectName %>-api \
+  -p <%= port || 3000 %>:<%= port || 3000 %> \
+  --env-file .env \
+  --restart unless-stopped \
+  <%= projectName %>:latest
+```
+
+---
+
+## ☁️ 2. Cloud Platform Deployments
+
+### AWS (Elastic Container Service / App Runner)
+1. Push your Docker image to **Amazon ECR**:
+   ```bash
+   aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+   docker tag <%= projectName %>:latest <aws_account_id>.dkr.ecr.<region>.amazonaws.com/<%= projectName %>:latest
+   docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/<%= projectName %>:latest
+   ```
+2. Create an **AWS App Runner** or **ECS Fargate** service pointing to the ECR image URI.
+3. Configure the environment variables and target port `<%= port || 3000 %>`.
+
+### Render / Railway / Heroku
+1. Connect your GitHub/GitLab repository to the platform.
+2. Select **Node.js** environment or **Docker** build type.
+3. Set the build and start commands:
+   - **Build Command:** `npm ci && npm run build` (or `./scripts/build.sh`)
+   - **Start Command:** `npm start`
+4. Add your production environment variables in the dashboard.
+
+### DigitalOcean (App Platform)
+1. Navigate to DigitalOcean Apps > **Create App**.
+2. Select your repository and the `main` branch.
+3. Choose the Dockerfile or configure:
+   - Run Command: `npm start`
+   - Port: `<%= port || 3000 %>`
+4. Add environment variables and link your managed database.
+
+---
+
+## 🖥️ 3. Bare-Metal / VPS Deployment (with PM2)
+
+If deploying to an Ubuntu/Debian VPS:
+
+1. Install Node.js 20+ and PM2:
+   ```bash
+   sudo npm install -g pm2
+   ```
+
+2. Clone repository and install dependencies:
+   ```bash
+   git clone <repo-url>
+   cd <%= projectName %>
+   npm ci
+   npm run build
+   ```
+
+3. Start application with PM2:
+   ```bash
+   pm2 start dist/index.js --name "<%= projectName %>" -i max
+   pm2 save
+   pm2 startup
+   ```
+
+4. Set up an **Nginx** reverse proxy to forward traffic from port 80/443 to port `<%= port || 3000 %>`.
+
+---
+
+## 📜 4. Automated Deployment Scripts
+
+This project includes deployment helper scripts in `scripts/`:
+
+- Run a full build check:
+  ```bash
+  chmod +x scripts/build.sh
+  ./scripts/build.sh
+  ```
+
+- Execute deployment:
+  ```bash
+  chmod +x scripts/deploy.sh
+  ./scripts/deploy.sh
+  ```
+
+---
+
+## 🔍 Health Check & Monitoring
+
+Verify that your application is running properly after deployment:
+
+```bash
+curl http://localhost:<%= port || 3000 %>/
+```
+
+Check logs regularly using:
+- **Docker:** `docker logs -f <%= projectName %>-api`
+- **PM2:** `pm2 logs <%= projectName %>`

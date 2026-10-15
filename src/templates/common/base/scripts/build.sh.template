@@ -1,0 +1,26 @@
+#!/bin/sh
+set -e
+
+echo "🚀 Building <%= projectName %>..."
+
+# Clean previous build artifacts
+if [ -d "dist" ]; then
+  echo "🧹 Cleaning previous build..."
+  rm -rf dist
+fi
+
+# Ensure dependencies are installed
+if [ ! -d "node_modules" ]; then
+  echo "📦 Installing dependencies..."
+  npm ci || npm install
+fi
+
+# Run linting
+echo "🔍 Running linter..."
+npm run lint
+
+# Compile TypeScript
+echo "⚙️ Compiling TypeScript..."
+npm run build
+
+echo "✅ Build completed successfully!"
