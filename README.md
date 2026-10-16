@@ -5,6 +5,7 @@ A powerful and flexible CLI tool for creating modern Node.js backend application
 [![npm version](https://badge.fury.io/js/trove-cli.svg)](https://badge.fury.io/js/trove-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.svg?v=101)](https://github.com/ellerbrock/typescript-badges/)
+[![Discussions](https://img.shields.io/badge/discussions-open-blue.svg)](https://github.com/Akshay1018/trove/discussions)
 
 ## 📋 Prerequisites
 
@@ -352,19 +353,26 @@ After installation, you might need to configure:
 
 ## 🛠️ Quick Start
 
-Create a new backend application:
+Create a new backend application and follow the prompts to select a framework, database, authentication method, and CI/CD pipeline:
 
 ```bash
 trove create my-awesome-api
 ```
 
-Follow the interactive prompts to configure your project:
-1. Select your preferred framework
-2. Choose database integration
-3. Configure authentication method
-4. Set up CI/CD pipeline
+Or create a project with a specific framework:
 
----
+```bash
+trove create my-express --framework express
+trove create my-nest --framework nest
+trove create my-fastify --framework fastify
+trove create my-koa --framework koa
+```
+
+You can combine options such as `--database postgres` and `--auth jwt`:
+
+```bash
+trove create my-api --framework express --database postgres --auth jwt
+```
 
 ## 📖 Usage Guide
 
@@ -502,7 +510,7 @@ http://localhost:3000/api-docs
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+We welcome contributions of all sizes! Start with the [Contributing Guidelines](CONTRIBUTING.md) for development setup, testing, and how to open your first pull request. Good first issues are a great place to begin.
 
 ### Development Setup
 
