@@ -10,7 +10,6 @@
     "mongodb-pipeline.yml": "ci/mongodb-pipeline.yml.template"
   },
   "dependencies": {
-    "mongoose": "^8.0.0",
-    "@types/mongoose": "^5.11.97"
+    "mongoose": "^8.0.0"
   }
 } 

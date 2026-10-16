@@ -1,16 +1,15 @@
 import express, { Express } from 'express';
-import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import { errorHandler } from './middleware/error.middleware';
-import routes from './routes';
-import { initializeDatabase } from './config/database';
-import { configureSession } from './middleware/auth.middleware';
+import { routes } from './routes';
+<% if (auth === 'oauth') { %>
 import session from 'express-session';
 import passport from 'passport';
 import './config/oauth.config';
+<% } %>
 
 const app: Express = express();
 
@@ -30,6 +29,7 @@ app.use(helmet({
 app.use(compression());
 app.use(morgan('dev'));
 
+<% if (auth === 'oauth') { %>
 // Session and Passport setup for OAuth
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -38,10 +38,9 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-
-// Set view engine for OAuth templates
-app.set('views', path.join(process.cwd(), 'views'));
+app.set('views', 'views');
 app.set('view engine', 'ejs');
+<% } %>
 
 // Routes
 app.use('/api', routes);

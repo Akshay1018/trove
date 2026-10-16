@@ -1,0 +1,10 @@
+import request from 'supertest';
+import { app } from '../../app';
+
+describe('JWT authentication endpoints', () => {
+  it('rejects profile access without an authentication token', async () => {
+    const response = await request(app).get('/api/auth/profile');
+
+    expect([401, 403]).toContain(response.status);
+  });
+});

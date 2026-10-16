@@ -138,4 +138,10 @@ If you need help, you can:
 - Open a GitHub issue
 - Email us at ak715173@gmail.com
 
+## Testing Generated Projects
+
+For guidance on running generated-project tests, authentication test coverage,
+database isolation, and the `--skip-tests` option, see
+[`docs/TESTING.md`](docs/TESTING.md).
+
 Thank you for contributing to Trove CLI! 🚀 

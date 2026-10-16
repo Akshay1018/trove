@@ -1,10 +1,16 @@
-import Router from 'koa-router';
+import Router from '@koa/router';
+<% if (auth !== 'skip') { %>
 import authRoutes from './auth.routes';
-import healthRoutes from './health.routes';
+<% } %>
+
 
 const router = new Router();
 
+<% if (auth !== 'skip') { %>
 router.use('/auth', authRoutes.routes(), authRoutes.allowedMethods());
-router.use('/health', healthRoutes.routes(), healthRoutes.allowedMethods());
+<% } %>
+router.get('/health', (ctx) => {
+  ctx.body = { status: 'ok' };
+});
 
 export default router;

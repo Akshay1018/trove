@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
-import { User } from '../../models/user.model';
-import { config } from '../../config';
-import { HttpException } from '../../utils/http-exception';
-import { logger } from '../../utils/logger';
+import { randomUUID } from 'crypto';
+import { User } from '../models/user.model';
+import { config } from '../config';
+import { ApiError } from '../utils/api-error';
+import { logger } from '../utils/logger';
 
 export class AuthController {
   public register = async (
@@ -18,7 +18,7 @@ export class AuthController {
       const existingUser = await User.findOne({ email });
 
       if (existingUser) {
-        throw new HttpException(409, 'User already exists');
+        throw new ApiError('User already exists', 409);
       }
 
       const user = new User({
@@ -26,7 +26,7 @@ export class AuthController {
         password,
         firstName,
         lastName,
-        verificationToken: uuidv4(),
+        verificationToken: randomUUID(),
       });
 
       await user.save();
@@ -53,23 +53,23 @@ export class AuthController {
       const user = await User.findOne({ email });
 
       if (!user) {
-        throw new HttpException(401, 'Invalid credentials');
+        throw new ApiError('Invalid credentials', 401);
       }
 
       const isPasswordValid = await user.comparePassword(password);
 
       if (!isPasswordValid) {
-        throw new HttpException(401, 'Invalid credentials');
+        throw new ApiError('Invalid credentials', 401);
       }
 
       if (!user.isVerified) {
-        throw new HttpException(401, 'Please verify your email first');
+        throw new ApiError('Please verify your email first', 401);
       }
 
       const token = jwt.sign(
         { userId: user._id },
-        config.jwtSecret,
-        { expiresIn: config.jwtExpiresIn }
+        config.jwt.secret,
+        { expiresIn: config.jwt.accessExpiresIn as import('jsonwebtoken').SignOptions['expiresIn'] }
       );
 
       res.json({
@@ -98,7 +98,7 @@ export class AuthController {
       const user = await User.findOne({ verificationToken: token });
 
       if (!user) {
-        throw new HttpException(400, 'Invalid verification token');
+        throw new ApiError('Invalid verification token', 400);
       }
 
       user.isVerified = true;
@@ -122,10 +122,10 @@ export class AuthController {
       const user = await User.findOne({ email });
 
       if (!user) {
-        throw new HttpException(404, 'User not found');
+        throw new ApiError('User not found', 404);
       }
 
-      user.resetPasswordToken = uuidv4();
+      user.resetPasswordToken = randomUUID();
       user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
       await user.save();
 
@@ -154,7 +154,7 @@ export class AuthController {
       });
 
       if (!user) {
-        throw new HttpException(400, 'Invalid or expired reset token');
+        throw new ApiError('Invalid or expired reset token', 400);
       }
 
       user.password = password;
@@ -169,7 +169,7 @@ export class AuthController {
   };
 
   // Get current user profile
-  static async getProfile(req: Request, res: Response): Promise<void> {
+  async getProfile(req: Request, res: Response): Promise<void> {
     try {
       res.json({
         message: 'Profile retrieved successfully',
@@ -182,7 +182,7 @@ export class AuthController {
   }
 
   // Logout user
-  static async logout(req: Request, res: Response): Promise<void> {
+  async logout(req: Request, res: Response): Promise<void> {
     try {
       // In JWT, we don't need to do anything server-side
       // The client should remove the token

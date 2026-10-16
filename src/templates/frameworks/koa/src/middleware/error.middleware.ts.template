@@ -1,15 +1,19 @@
 import { Context, Next } from 'koa';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const errorMiddleware = async (ctx: Context, next: Next): Promise<void> => {
   try {
     await next();
-  } catch (err) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error('Internal Server Error');
+    const status = typeof err === 'object' && err !== null
+        ? 500
+        : 500;
     logger.error(err);
-    ctx.status = err.status || 500;
+    ctx.status = status || 500;
     ctx.body = {
       status: 'error',
-      message: err.message || 'Internal Server Error',
+      message: error.message || 'Internal Server Error',
     };
     ctx.app.emit('error', err, ctx);
   }

@@ -9,6 +9,7 @@ export interface TemplateOptions {
   database: Database;
   auth: Auth;
   ci: CI;
+  skipTests?: boolean;
   packageManager?: 'npm' | 'yarn' | 'pnpm';
   port?: number;
   description?: string;

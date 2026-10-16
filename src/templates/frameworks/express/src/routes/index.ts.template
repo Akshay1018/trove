@@ -1,6 +1,6 @@
 import { Router } from 'express';
 <% if (auth !== 'skip') { %>
-import { authRoutes } from './auth.routes';
+import authRoutes from './auth.routes';
 <% } %>
 
 const router = Router();

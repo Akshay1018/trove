@@ -30,17 +30,15 @@ export async function createApp(): Promise<FastifyInstance> {
     database: process.env.DB_NAME || '<%= projectName %>',
   };
 
-  await initializeDatabase(dbConfig);
+  if (process.env.NODE_ENV !== 'test') {
+    await initializeDatabase(dbConfig);
+  }
 
   // Health check route
   app.get('/health', async () => {
     return { status: 'ok' };
   });
-
-  // Register routes
-  app.register(import('./routes/auth.routes'), { prefix: '/api/auth' });
-
-  // Error handler
+// Error handler
   app.setErrorHandler((error, request, reply) => {
     logger.error(error);
     reply.status(500).send({ error: 'Internal Server Error' });

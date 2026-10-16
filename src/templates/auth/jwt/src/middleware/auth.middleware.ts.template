@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+﻿import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../../../models/user.model';
 import { AuthenticationError, AuthorizationError } from '../../../middleware/error.middleware';
@@ -106,7 +106,7 @@ export const refreshToken = async (
     const accessToken = jwt.sign(
       { id: user._id, role: user.role },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: config.jwt.expiresIn as import('jsonwebtoken').SignOptions['expiresIn'] }
     );
 
     res.cookie('token', accessToken, {
@@ -127,3 +127,7 @@ export const refreshToken = async (
     }
   }
 }; 
+
+// Alias used by the generated authentication routes.
+export const authenticate = protect;
+

@@ -1,12 +1,12 @@
 {
-  "dependencies": {
-    "fastify": "^4.27.2",
-    "@fastify/cors": "^8.4.0",
-    "@fastify/helmet": "^10.0.0",
-    "@fastify/swagger": "^8.10.0",
-    "pino-pretty": "^10.3.0"
-  },
-  "devDependencies": {
-    "@types/fastify": "^4.0.0"
-  }
-} 
+    "dependencies":  {
+                         "fastify":  "^4.27.2",
+                         "@fastify/cors":  "^8.4.0",
+                         "@fastify/helmet":  "^10.0.0",
+                         "@fastify/swagger":  "^8.10.0",
+                         "pino-pretty":  "^10.3.0"
+                     },
+    "devDependencies":  {
+
+                        }
+}

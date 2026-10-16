@@ -1,0 +1,27 @@
+import { NestFactory } from '@nestjs/core';
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { AppModule } from '../../app.module';
+
+describe('NestJS API integration', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    app = await NestFactory.create(AppModule, { logger: false });
+    await app.init();
+  });
+
+  afterAll(async () => {
+    if (app) await app.close();
+  });
+
+  it('returns a successful response from the root route', async () => {
+    const response = await request(app.getHttpServer()).get('/');
+    expect(response.status).toBe(200);
+  });
+
+  it('returns 404 for an unknown route', async () => {
+    const response = await request(app.getHttpServer()).get('/route-that-does-not-exist');
+    expect(response.status).toBe(404);
+  });
+});
