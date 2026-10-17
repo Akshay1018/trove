@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
           registry-url: 'https://registry.npmjs.org'
       
       - name: Install Dependencies with npm install
@@ -85,7 +85,8 @@ jobs:
             
             ## Installation
             ```bash
-            npm install -g trove-cli
+            npm install --global trove-cli
+            trove --version
             ```
           draft: false
           prerelease: false
