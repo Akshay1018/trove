@@ -1,8 +1,8 @@
-﻿import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../../../models/user.model';
-import { AuthenticationError, AuthorizationError } from '../../../middleware/error.middleware';
-import { config } from '../../../config';
+import { User } from '../models/user.model';
+import { AuthenticationError, AuthorizationError } from '../middleware/error.middleware';
+import { config } from '../config';
 
 interface JwtPayload {
   id: string;
@@ -94,7 +94,7 @@ export const refreshToken = async (
 
     const decoded = jwt.verify(
       refreshToken,
-      config.jwt.refreshSecret
+      config.jwt.secret
     ) as JwtPayload;
 
     const user = await User.findById(decoded.id);
@@ -106,7 +106,7 @@ export const refreshToken = async (
     const accessToken = jwt.sign(
       { id: user._id, role: user.role },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn as import('jsonwebtoken').SignOptions['expiresIn'] }
+      { expiresIn: config.jwt.accessExpiresIn as import('jsonwebtoken').SignOptions['expiresIn'] }
     );
 
     res.cookie('token', accessToken, {

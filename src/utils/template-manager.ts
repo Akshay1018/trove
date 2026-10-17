@@ -304,7 +304,7 @@ export class TemplateManager {
       if (stat.isDirectory()) {
         templates.push(...this.getTemplateFiles(join(relativePath, item)));
       } else {
-        if (item.includes('.backup-') || item === 'template.json') {
+        if (item.includes('.backup-') || item.endsWith('.issue36-backup') || item === 'template.json') {
           continue;
         }
 
