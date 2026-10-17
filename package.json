@@ -1,14 +1,12 @@
 {
-  "name": "create-node-backend-temp",
+  "name": "trove-cli",
   "version": "1.0.0",
-  "description": "A CLI tool for creating modern Node.js backend applications",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "description": "A CLI tool for scaffolding modern Node.js backend applications",
   "bin": {
-    "create-node-backend-temp": "./dist/cli.js"
+    "trove": "./dist/src/cli.js"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir -p dist/templates && tsc --noEmit false && cp -r src/templates/* dist/templates/",
+    "build": "rm -rf dist && mkdir -p dist/src/templates && tsc --noEmit false && cp -r src/templates/* dist/src/templates/ && cp package.json dist/package.json",
     "verify-templates": "ts-node -P tsconfig.json scripts/verify-templates.ts",
     "watch": "tsc -w",
     "dev": "ts-node src/cli.ts",
@@ -40,7 +38,7 @@
   },
   "homepage": "https://github.com/Akshay1018/trove#readme",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -106,7 +104,6 @@
   },
   "files": [
     "dist",
-    "templates",
     "LICENSE",
     "README.md"
   ],

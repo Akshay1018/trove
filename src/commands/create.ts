@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { TemplateManager } from '../utils/template-manager';
 import { logger } from '../utils/logger';
-import { Framework, Database, Auth, CI, TemplateOptions as ExternalTemplateOptions } from '../types/template';
+import { Framework, Database, Auth, CI } from '../types/template';
 import path from 'path';
 import { TemplateOptions as ManagerTemplateOptions } from '../types/template-options';
 
