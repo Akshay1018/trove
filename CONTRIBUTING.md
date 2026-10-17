@@ -1,89 +1,52 @@
-# Contributing to Trove CLI
+# Contributing to Trove
 
-First off, thank you for considering contributing to Trove CLI! It's people like you that make Trove CLI such a great tool.
+Thanks for your interest in contributing to Trove. Contributions of all kinds are welcome, from bug reports and documentation improvements to code and templates.
 
-## Code of Conduct
+## Getting started
 
-By participating in this project, you are expected to uphold our Code of Conduct:
+You will need Node.js 16 or later, npm, and Git. Clone the repository and install dependencies:
 
-- Use welcoming and inclusive language
-- Be respectful of different viewpoints and experiences
-- Gracefully accept constructive criticism
-- Focus on what is best for the community
-- Show empathy towards other community members
+```bash
+git clone https://github.com/Akshay1018/trove.git
+cd trove
+npm install
+npm run dev
+```
 
-## How Can I Contribute?
+To try the CLI locally, use the project CLI and choose a temporary output directory:
 
-### Reporting Bugs
+```bash
+npx ts-node src/cli.ts create my-local-test
+```
 
-Before creating bug reports, please check the existing issues as you might find out that you don't need to create one. When you are creating a bug report, please include as many details as possible:
+## Making a change
 
-- Use a clear and descriptive title
-- Describe the exact steps to reproduce the problem
-- Provide specific examples to demonstrate the steps
-- Describe the behavior you observed after following the steps
-- Explain which behavior you expected to see instead and why
-- Include screenshots if possible
-- Include your environment details (OS, Node.js version, etc.)
+Create a focused branch from `main` rather than committing directly to it:
 
-### Suggesting Enhancements
+```bash
+git checkout -b docs/short-description
+```
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, please include:
+Keep changes scoped and follow the existing TypeScript, formatting, and template conventions. For template changes, check that generated files use the expected project-name variables and include required environment-variable documentation.
 
-- A clear and descriptive title
-- A detailed description of the proposed functionality
-- Any possible drawbacks
-- Why this enhancement would be useful to most users
+Run relevant checks before opening a pull request:
 
-### Pull Requests
+```bash
+npm test
+npm run lint
+```
 
-1. Fork the repo and create your branch from `main`
-2. If you've added code that should be tested, add tests
-3. If you've changed APIs, update the documentation
-4. Ensure the test suite passes
-5. Make sure your code follows the existing style guidelines
-6. Issue that pull request!
+For template changes, also run `npm run verify-templates` when applicable.
 
-## Development Process
+## Issues and pull requests
 
-1. **Setup Development Environment**
-   ```bash
-   git clone https://github.com/yourusername/trove-cli.git
-   cd trove-cli
-   npm install
-   npm run dev
-   ```
+Before opening an issue, search existing issues and use the repository's issue templates. Bug reports should include steps to reproduce, expected and actual behavior, and relevant Node.js/npm and operating-system versions. Feature requests should explain the use case and proposed behavior.
 
-2. **Branch Naming Convention**
-   - Feature: `feature/your-feature-name`
-   - Bug Fix: `fix/issue-description`
-   - Documentation: `docs/what-you-documented`
+Open a pull request from your branch against `main`. Describe what changed and why, link a related issue when available, and mention checks you ran. Before requesting review, confirm that the change is focused, relevant tests and linting pass, and documentation or generated-template content is updated as needed.
 
-3. **Commit Message Guidelines**
-   ```
-   type(scope): description
-   
-   [optional body]
-   
-   [optional footer]
-   ```
-   Types:
-   - feat: A new feature
-   - fix: A bug fix
-   - docs: Documentation only changes
-   - style: Changes that don't affect the meaning of the code
-   - refactor: Code change that neither fixes a bug nor adds a feature
-   - test: Adding missing tests or correcting existing tests
-   - chore: Changes to the build process or auxiliary tools
+Use a clear branch name such as `feat/add-example`, `fix/template-path`, or `docs/update-guide`. Commit messages should be concise and may use the conventional format, for example `docs: clarify local setup` or `fix: correct template path`.
 
-4. **Testing**
-   - Write tests for new features
-   - Update tests for bug fixes
-   - Run tests before submitting PR:
-     ```bash
-     npm test
-     npm run test:coverage
-     ```
+## Help wanted
 
 ## Template Development Guidelines
 
@@ -144,4 +107,6 @@ For guidance on running generated-project tests, authentication test coverage,
 database isolation, and the `--skip-tests` option, see
 [`docs/TESTING.md`](docs/TESTING.md).
 
-Thank you for contributing to Trove CLI! 🚀 
+Thank you for contributing to Trove CLI! ðŸš€
+
+If you are new to the project, look for issues labeled `good first issue` or `help wanted`. If you need guidance, ask in the issue or discussion, or contact the maintainer at ak715173@gmail.com.

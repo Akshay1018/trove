@@ -6,7 +6,7 @@ import { createCommand } from './commands/create';
 const program = new Command();
 
 program
-  .name('create-node-backend-temp')
+  .name('trove')
   .description('A CLI tool for creating modern Node.js backend applications')
   .version(version);
 

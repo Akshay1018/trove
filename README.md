@@ -1,16 +1,17 @@
 # Trove CLI
 
-A powerful and flexible CLI tool for creating modern Node.js backend applications with best practices baked in.
+Scaffold production-minded Node.js backends for Express, NestJS, Fastify, and Koa—with database, authentication, testing, and CI options in one CLI.
 
-[![npm version](https://badge.fury.io/js/trove-cli.svg)](https://badge.fury.io/js/trove-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/Akshay1018/trove/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Akshay1018/trove/actions/workflows/ci.yml)
 [![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.svg?v=101)](https://github.com/ellerbrock/typescript-badges/)
+[![Discussions](https://img.shields.io/badge/discussions-open-blue.svg)](https://github.com/Akshay1018/trove/discussions)
 
 ## 📋 Prerequisites
 
 Before using Trove CLI, ensure you have the following installed on your system:
 
-- **Node.js** (v16.x or higher)
+- **Node.js** (v20.x or higher)
 - **npm** (v8.x or higher) or **yarn** (v1.22.x or higher)
 - **Git** (v2.x or higher)
 - **Docker** (optional, v20.x or higher) - Required for containerization
@@ -310,61 +311,38 @@ Trove is moving toward a more modern AI-first backend generation experience whil
 
 ## 📦 Installation
 
-### Option 1: Global Installation (Recommended)
+The `trove-cli` package is not published on npm yet. Until the first release, run Trove from a local checkout:
+
 ```bash
-# Using npm
-npm install -g trove-cli
+git clone https://github.com/Akshay1018/trove.git
+cd trove
+npm ci
+npm run build
+node dist/src/cli.js --version
+```
 
-# Using yarn
-yarn global add trove-cli
+After the first npm release, install the package globally and use the `trove` command:
 
-# Verify installation
+```bash
+npm install --global trove-cli
 trove --version
 ```
 
-### Option 2: Local Project Installation
-```bash
-# Using npm
-npm install trove-cli
-
-# Using yarn
-yarn add trove-cli
-
-# Run using npx
-npx trove create my-project
-```
-
-### Option 3: Direct Use Without Installation
-```bash
-# Using npx
-npx trove-cli create my-project
-
-# Using yarn
-yarn dlx trove-cli create my-project
-```
-
-After installation, you might need to configure:
-1. Database connection settings
-2. OAuth credentials (if using social authentication)
-3. Environment variables
-
----
-
 ## 🛠️ Quick Start
 
-Create a new backend application:
+From the repository checkout, scaffold an Express API with PostgreSQL, JWT authentication, and GitHub Actions:
 
 ```bash
-trove create my-awesome-api
+node dist/src/cli.js create my-api --framework express --database postgres --auth jwt --ci github
 ```
 
-Follow the interactive prompts to configure your project:
-1. Select your preferred framework
-2. Choose database integration
-3. Configure authentication method
-4. Set up CI/CD pipeline
+Choose another supported framework with `--framework koa`, `--framework fastify`, or `--framework nestjs`. The CLI also supports `--database mongodb|postgres|mysql|skip` and `--auth jwt|session|oauth|skip`.
 
----
+Once the npm package is published, the equivalent command is:
+
+```bash
+trove create my-api --framework express --database postgres --auth jwt --ci github
+```
 
 ## 📖 Usage Guide
 
@@ -376,18 +354,14 @@ trove create <project-name> [options]
 
 #### Options
 
-- `--framework`: Specify the framework (express, koa, nest, fastify)
+- `--framework`: Specify the framework (express, koa, nestjs, fastify)
 - `--database`: Choose database integration (mongodb, postgres, mysql)
 - `--auth`: Select authentication method (jwt, session, oauth)
-- `--skip-git`: Skip git initialization
-- `--skip-install`: Skip package installation
-- `--skip-tests`: Skip test setup
-- `--skip-ci`: Skip CI/CD setup
 
 ### Example Setup
 
 ```bash
-trove create my-api --framework nest --database postgres --auth jwt --skip-install
+trove create my-api --framework nestjs --database postgres --auth jwt
 ```
 
 ### Project Structure
@@ -502,7 +476,7 @@ http://localhost:3000/api-docs
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+We welcome contributions of all sizes! Start with the [Contributing Guidelines](CONTRIBUTING.md) for development setup, testing, and how to open your first pull request. Good first issues are a great place to begin.
 
 ### Development Setup
 
