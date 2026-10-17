@@ -1,0 +1,26 @@
+import { createApp } from '../../app';
+
+describe('Fastify API integration', () => {
+  let app: Awaited<ReturnType<typeof createApp>>;
+
+  beforeAll(async () => {
+    process.env.NODE_ENV = 'test';
+    app = await createApp();
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    if (app) await app.close();
+  });
+
+  it('returns a healthy response', async () => {
+    const response = await app.inject({ method: 'GET', url: '/health' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ status: 'ok' });
+  });
+
+  it('returns 404 for an unknown route', async () => {
+    const response = await app.inject({ method: 'GET', url: '/route-that-does-not-exist' });
+    expect(response.statusCode).toBe(404);
+  });
+});

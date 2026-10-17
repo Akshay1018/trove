@@ -48,4 +48,65 @@ Use a clear branch name such as `feat/add-example`, `fix/template-path`, or `doc
 
 ## Help wanted
 
+## Template Development Guidelines
+
+When contributing new templates or modifying existing ones:
+
+1. **Framework Templates**
+   - Follow framework's best practices
+   - Include essential dependencies only
+   - Provide clear documentation
+   - Include basic examples
+
+2. **Database Templates**
+   - Include proper connection handling
+   - Add migration support
+   - Implement basic CRUD operations
+   - Follow security best practices
+
+3. **CI/CD Templates**
+   - Support multiple environments
+   - Include caching strategies
+   - Configure proper test runners
+   - Add security scanning when possible
+
+## Style Guide
+
+- Use TypeScript for all new code
+- Follow the existing code style
+- Use meaningful variable and function names
+- Add comments for complex logic
+- Keep functions small and focused
+- Use async/await over promises
+- Implement proper error handling
+
+## Documentation
+
+- Update README.md if needed
+- Add JSDoc comments for new functions
+- Update API documentation
+- Include examples for new features
+
+## Review Process
+
+1. Automated checks must pass
+2. Code review by maintainers
+3. Documentation review
+4. Testing verification
+5. Final approval and merge
+
+## Getting Help
+
+If you need help, you can:
+- Open a GitHub issue
+- Email us at ak715173@gmail.com
+
+## Testing Generated Projects
+
+For guidance on running generated-project tests, authentication test coverage,
+database isolation, and the `--skip-tests` option, see
+[`docs/TESTING.md`](docs/TESTING.md).
+
+Thank you for contributing to Trove CLI! ðŸš€
+
 If you are new to the project, look for issues labeled `good first issue` or `help wanted`. If you need guidance, ask in the issue or discussion, or contact the maintainer at ak715173@gmail.com.

@@ -14,6 +14,7 @@ interface CreateCommandOptions {
   defaultAuth?: string;
   defaultCI?: string;
   projectName?: string;
+  skipTests?: boolean;
 }
 
 interface Answers {
@@ -25,7 +26,7 @@ interface Answers {
 }
 
 export async function createCommand(program: Command, options: CreateCommandOptions = {}): Promise<void> {
-  console.log(chalk.cyan('\n🚀 Welcome to Trove - Modern Node.js Backend Generator\n'));
+  console.log(chalk.cyan('\nðŸš€ Welcome to Trove - Modern Node.js Backend Generator\n'));
   
   try {
     const answers = await inquirer.prompt([
@@ -106,6 +107,7 @@ export async function createCommand(program: Command, options: CreateCommandOpti
       database: (options.defaultDatabase as Database) || answers.database,
       auth: (options.defaultAuth as Auth) || answers.auth,
       ci: (options.defaultCI as CI) || answers.ci,
+      skipTests: options.skipTests ?? false,
       projectName: projectName,
       description: `A modern Node.js backend application using ${answers.framework || options.defaultFramework}`,
       author: '',
@@ -121,7 +123,7 @@ export async function createCommand(program: Command, options: CreateCommandOpti
 
     await templateManager.createProject(projectName);
 
-    spinner.succeed(chalk.green('Project created successfully! 🎉'));
+    spinner.succeed(chalk.green('Project created successfully! ðŸŽ‰'));
 
     // Show next steps
     console.log('\n' + chalk.cyan.bold('Next steps:'));
@@ -132,11 +134,13 @@ export async function createCommand(program: Command, options: CreateCommandOpti
     console.log('\n' + chalk.cyan.bold('Available commands:'));
     console.log(chalk.white('  npm run dev      ') + chalk.gray('- Start development server'));
     console.log(chalk.white('  npm run build    ') + chalk.gray('- Build for production'));
-    console.log(chalk.white('  npm run test     ') + chalk.gray('- Run tests'));
+    if (!options.skipTests) {
+      console.log(chalk.white('  npm run test     ') + chalk.gray('- Run tests'));
+    }
     console.log(chalk.white('  npm run lint     ') + chalk.gray('- Lint code'));
     console.log(chalk.white('  npm run format   ') + chalk.gray('- Format code'));
 
-    console.log('\n' + chalk.green.bold('Happy coding! 🚀\n'));
+    console.log('\n' + chalk.green.bold('Happy coding! ðŸš€\n'));
 
   } catch (error) {
     logger.error('Failed to create project:', error instanceof Error ? error.message : String(error));

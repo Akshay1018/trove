@@ -46,10 +46,12 @@ export class TemplateManager {
       'src/utils',
       'src/config',
       'src/types',
-      'src/__tests__/unit',
-      'src/__tests__/integration',
       'logs'
     ];
+
+    if (!this.templateOptions.skipTests) {
+      directories.push('src/__tests__/unit', 'src/__tests__/integration');
+    }
 
     directories.forEach(dir => {
       const path = join(this.projectPath, dir);
@@ -80,9 +82,46 @@ export class TemplateManager {
     const ciTemplates = this.getTemplateFiles(`ci/${this.templateOptions.ci}`);
     await this.processTemplateFiles(ciTemplates);
 
+    // Merge dependencies declared by the selected database and auth templates.
+    for (const metadataPath of [
+      this.templateOptions.database && this.templateOptions.database !== 'skip'
+        ? join(this.templatesPath, 'databases', this.templateOptions.database, 'template.json')
+        : undefined,
+      this.templateOptions.auth && this.templateOptions.auth !== 'skip'
+        ? join(this.templatesPath, 'auth', this.templateOptions.auth, 'template.json')
+        : undefined,
+    ]) {
+      if (!metadataPath || !existsSync(metadataPath)) continue;
+
+      const metadata = JSON.parse(readFileSync(metadataPath, 'utf-8'));
+      if (metadata.dependencies || metadata.devDependencies) {
+        this.packageJsonContents.push({
+          dependencies: metadata.dependencies,
+          devDependencies: metadata.devDependencies,
+        });
+      }
+    }
     // After all templates are processed, merge and write the final package.json
     if (this.packageJsonContents.length > 0) {
       const mergedPackageJson = mergePackageJson(this.packageJsonContents);
+
+      if (this.templateOptions.skipTests) {
+        for (const script of ['test', 'test:watch', 'test:coverage', 'test:cov']) {
+          delete mergedPackageJson.scripts?.[script];
+        }
+
+        for (const dependency of [
+          '@types/jest',
+          'jest',
+          'ts-jest',
+          '@types/supertest',
+          'supertest',
+          'mongodb-memory-server'
+        ]) {
+          delete mergedPackageJson.devDependencies?.[dependency];
+          delete mergedPackageJson.dependencies?.[dependency];
+        }
+      }
       const targetPath = join(this.projectPath, 'package.json');
       writeFileSync(targetPath, JSON.stringify(mergedPackageJson, null, 2));
       logger.info('Written merged package.json');
@@ -91,19 +130,117 @@ export class TemplateManager {
 
   private async processTemplateFiles(templates: string[]): Promise<void> {
     for (const template of templates) {
+      const templateRelativePath = template
+        .replace(this.templatesPath, '')
+        .replace(/^[\\/]+/, '')
+        .replace(/\\/g, '/');
+
+      // Only include templates for the selected framework, database, and auth option.
+      if (templateRelativePath.startsWith('frameworks/') &&
+          !templateRelativePath.startsWith(`frameworks/${this.templateOptions.framework}/`)) {
+        continue;
+      }
+
+      if (templateRelativePath.startsWith('databases/') &&
+          (!this.templateOptions.database ||
+           this.templateOptions.database === 'skip' ||
+           !templateRelativePath.startsWith(`databases/${this.templateOptions.database}/`))) {
+        continue;
+      }
+
+      // The common/base service is the shared generic implementation.
+      // The legacy Express copy redeclares BaseService and breaks builds.
+      if (
+        this.templateOptions.framework === 'express' &&
+        templateRelativePath === 'frameworks/express/src/services/base.service.ts.template'
+      ) {
+        logger.info(`Skipping conflicting legacy template: ${templateRelativePath}`);
+        continue;
+      }
+
+      if (templateRelativePath.startsWith('auth/')) {
+        if (!this.templateOptions.auth ||
+            this.templateOptions.auth === 'skip' ||
+            !templateRelativePath.startsWith(`auth/${this.templateOptions.auth}/`)) {
+          continue;
+        }
+
+        // Skip legacy JWT files that conflict with the current templates.
+        if (
+          this.templateOptions.framework === 'express' &&
+          (
+            templateRelativePath === 'auth/jwt/src/middleware/auth.ts' ||
+            templateRelativePath === 'auth/jwt/src/routes/auth.ts' ||
+            templateRelativePath === 'auth/jwt/src/utils/auth.ts'
+          )
+        ) {
+          continue;
+        }
+
+        // These legacy files are framework/database-specific and conflict with
+        // the selected database model and the current framework's auth routes.
+        if (/^auth\/[^/]+\/src\/models\/user\.model\.ts$/.test(templateRelativePath)) {
+          continue;
+        }
+
+        if (templateRelativePath.endsWith('/src/routes/auth.ts') &&
+            this.templateOptions.framework !== 'koa') {
+          continue;
+        }
+
+        if (templateRelativePath.endsWith('/src/middleware/auth.ts') &&
+            this.templateOptions.framework !== 'koa') {
+          continue;
+        }
+      }
+      if (
+        this.templateOptions.skipTests &&
+        (
+          /(^|\/)jest\.config\.[^/]+$/.test(templateRelativePath) ||
+          /(^|\/)__tests__(\/|$)/.test(templateRelativePath) ||
+          /\.(test|spec)\.[^/]+(?:\.template)?$/.test(templateRelativePath)
+        )
+      ) {
+        logger.info(`Skipping test template: ${templateRelativePath}`);
+        continue;
+      }
+
+      // Shared legacy tests assume Express and MongoDB-specific modules.
+      // Keep framework tests separate and only generate optional integration
+      // tests when their corresponding feature is selected.
+      if (templateRelativePath.startsWith('common/base/src/__tests__/')) {
+        logger.info(`Skipping legacy shared test: ${templateRelativePath}`);
+        continue;
+      }
+
+      const isExpressJwtAuthTest =
+        templateRelativePath === 'frameworks/express/src/__tests__/integration/auth.test.ts.template';
+
+      if (isExpressJwtAuthTest && this.templateOptions.auth !== 'jwt') {
+        logger.info(`Skipping JWT-specific auth test for auth option: ${this.templateOptions.auth}`);
+        continue;
+      }
+
+      const isAuthTest = /(^|\/)auth\.test\.[^/]+(\.template)?$/.test(templateRelativePath);
+      const isDatabaseTest = /(^|\/)database\.test\.[^/]+(\.template)?$/.test(templateRelativePath);
+
+      if (isAuthTest && (!this.templateOptions.auth || this.templateOptions.auth === 'skip')) {
+        logger.info(`Skipping auth test because authentication is disabled: ${templateRelativePath}`);
+        continue;
+      }
+
+      if (isDatabaseTest && (!this.templateOptions.database || this.templateOptions.database === 'skip')) {
+        logger.info(`Skipping database test because no database is selected: ${templateRelativePath}`);
+        continue;
+      }
       try {
         const content = readFileSync(template, 'utf-8');
         const processed = render(content, this.templateOptions);
 
         // Calculate relative path within the templates directory
-        //The normalization to convert the backslashes into forward slashes
-        const rawRelative=template.replace(this.templatesPath,'');
-        const templateRelativePath = rawRelative
-        .replace(/\\/g,'/')
-        .replace(/^\/+/,'');
 
         // Special handling for package.json files
-        if (templateRelativePath.endsWith('package.json.template') || 
+        if (templateRelativePath.endsWith('package.json.template') ||
             templateRelativePath.endsWith('package.json')) {
           try {
             // Check if this is a framework-specific package.json
@@ -117,7 +254,7 @@ export class TemplateManager {
               this.packageJsonContents.push(packageJson);
             }
             // Handle regular package.json files
-            else if (!templateRelativePath.includes('frameworks/') || 
+            else if (!templateRelativePath.includes('frameworks/') ||
                      templateRelativePath.includes(`frameworks/${this.templateOptions.framework}`)) {
               const packageJson = JSON.parse(processed);
               this.packageJsonContents.push(packageJson);
@@ -167,6 +304,19 @@ export class TemplateManager {
       if (stat.isDirectory()) {
         templates.push(...this.getTemplateFiles(join(relativePath, item)));
       } else {
+        if (item.includes('.backup-') || item.endsWith('.issue36-backup') || item === 'template.json') {
+          continue;
+        }
+
+        if (item.endsWith('.template')) {
+          templates.push(itemPath);
+          continue;
+        }
+
+        if (existsSync(`${itemPath}.template`)) {
+          continue;
+        }
+
         templates.push(itemPath);
       }
     }

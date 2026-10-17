@@ -7,6 +7,7 @@ export interface IUser extends Document {
   firstName: string;
   lastName: string;
   role: 'user' | 'admin';
+  isVerified: boolean;
   isActive: boolean;
   lastLogin?: Date;
   verificationToken?: string;
@@ -53,6 +54,10 @@ const userSchema = new Schema<IUser>(
       enum: ['user', 'admin'],
       default: 'user'
     },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
     isActive: {
       type: Boolean,
       default: true
@@ -68,8 +73,8 @@ const userSchema = new Schema<IUser>(
     timestamps: true,
     toJSON: {
       transform: function(doc, ret) {
-        delete ret.password;
-        delete ret.__v;
+        delete (ret as Record<string, unknown>).password;
+        delete (ret as Record<string, unknown>).__v;
         return ret;
       }
     }

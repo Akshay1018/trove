@@ -7,20 +7,21 @@ import {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
-} from '@/schemas/auth.schema';
+} from '@/validators/auth.validator';
 
 const router = Router();
+const authController = new AuthController();
 
 // Public routes
-router.post('/register', validateRequest(registerSchema), AuthController.register);
-router.post('/login', validateRequest(loginSchema), AuthController.login);
+router.post('/register', validateRequest(registerSchema), authController.register);
+router.post('/login', validateRequest(loginSchema), authController.login);
 
 // Protected routes
-router.get('/profile', authenticate, AuthController.getProfile);
-router.post('/logout', authenticate, AuthController.logout);
+router.get('/profile', authenticate, authController.getProfile);
+router.post('/logout', authenticate, authController.logout);
 
-router.get('/verify/:token', AuthController.verifyEmail);
-router.post('/forgot-password', validateRequest(forgotPasswordSchema), AuthController.forgotPassword);
-router.post('/reset-password/:token', validateRequest(resetPasswordSchema), AuthController.resetPassword);
+router.get('/verify/:token', authController.verifyEmail);
+router.post('/forgot-password', validateRequest(forgotPasswordSchema), authController.forgotPassword);
+router.post('/reset-password/:token', validateRequest(resetPasswordSchema), authController.resetPassword);
 
 export default router; 
